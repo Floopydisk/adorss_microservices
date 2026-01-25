@@ -12,7 +12,7 @@ export function createServiceRoutes(
     mobility: string;
     finance: string;
   },
-) {
+): Router {
   const router = Router();
 
   // Education Service routes - Protected with auth

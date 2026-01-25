@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import AuthServiceClient from "../services/authServiceClient";
 
-const router = Router();
+const router: Router = Router();
 
-export function createAuthRoutes(authServiceClient: AuthServiceClient) {
+export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
   // Register
   router.post("/register", async (req: Request, res: Response) => {
     try {
