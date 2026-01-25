@@ -29,6 +29,10 @@ Route::prefix('auth')->middleware('rate_limit_auth')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::post('logout', [AuthController::class, 'logout']);
 
+        // Multi-role support endpoints
+        Route::get('me/roles', [AuthController::class, 'listUserRoles'])->name('auth.list-roles');
+        Route::post('switch-role', [AuthController::class, 'switchRole'])->name('auth.switch-role');
+
         // RBAC permission utilities
         Route::get('permissions', [PermissionController::class, 'listForUser']);
         Route::post('permissions/check', [PermissionController::class, 'check']);

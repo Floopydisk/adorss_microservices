@@ -15,50 +15,433 @@ export function createServiceRoutes(
 ): Router {
   const router = Router();
 
-  // Education Service routes - Protected with auth
-  router.use(
-    "/students",
+  // ========== EDUCATION SERVICE ROUTES ==========
+
+  // Assignments - create, read, update, delete
+  router.post(
+    "/education/assignments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/assignments": "/assignments",
+    }),
+  );
+
+  router.get(
+    "/education/assignments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/assignments": "/assignments",
+    }),
+  );
+
+  router.get(
+    "/education/assignments/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/assignments": "/assignments",
+    }),
+  );
+
+  router.patch(
+    "/education/assignments/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/assignments": "/assignments",
+    }),
+  );
+
+  router.delete(
+    "/education/assignments/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "delete"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/assignments": "/assignments",
+    }),
+  );
+
+  // Grades
+  router.post(
+    "/education/grades",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("grades", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/grades": "/grades",
+    }),
+  );
+
+  router.get(
+    "/education/grades",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("grades", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/grades": "/grades",
+    }),
+  );
+
+  router.patch(
+    "/education/grades/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("grades", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/grades": "/grades",
+    }),
+  );
+
+  // Attendance
+  router.post(
+    "/education/attendance",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("attendance", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/attendance": "/attendance",
+    }),
+  );
+
+  router.get(
+    "/education/attendance",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("attendance", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/attendance": "/attendance",
+    }),
+  );
+
+  router.patch(
+    "/education/attendance/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("attendance", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/attendance": "/attendance",
+    }),
+  );
+
+  // Timetable
+  router.get(
+    "/education/timetable",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("timetable", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/timetable": "/timetable",
+    }),
+  );
+
+  router.post(
+    "/education/timetable",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("timetable", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/timetable": "/timetable",
+    }),
+  );
+
+  router.patch(
+    "/education/timetable/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("timetable", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/timetable": "/timetable",
+    }),
+  );
+
+  // Results
+  router.get(
+    "/education/results",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("results", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/results": "/results",
+    }),
+  );
+
+  router.post(
+    "/education/results",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("results", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/results": "/results",
+    }),
+  );
+
+  router.patch(
+    "/education/results/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("results", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/results": "/results",
+    }),
+  );
+
+  // Classes
+  router.get(
+    "/education/classes",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("classes", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/classes": "/classes",
+    }),
+  );
+
+  router.post(
+    "/education/classes",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("classes", "manage"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/classes": "/classes",
+    }),
+  );
+
+  // Students
+  router.get(
+    "/education/students",
     authMiddleware.authenticate,
     authMiddleware.authorize("students", "read"),
     ServiceRouter.createProxy(serviceUrls.education, {
-      "^/api/students": "/students",
+      "^/api/education/students": "/students",
     }),
   );
 
-  router.use(
-    "/teachers",
+  router.post(
+    "/education/students",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/students": "/students",
+    }),
+  );
+
+  router.patch(
+    "/education/students/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/students": "/students",
+    }),
+  );
+
+  // Teachers
+  router.get(
+    "/education/teachers",
     authMiddleware.authenticate,
     authMiddleware.authorize("teachers", "read"),
     ServiceRouter.createProxy(serviceUrls.education, {
-      "^/api/teachers": "/teachers",
+      "^/api/education/teachers": "/teachers",
     }),
   );
 
-  // Finance Service routes - Protected with auth
-  router.use(
-    "/finance",
+  router.post(
+    "/education/teachers",
     authMiddleware.authenticate,
-    authMiddleware.authorize("finance", "read"),
-    ServiceRouter.createProxy(serviceUrls.finance, {
-      "^/api/finance": "/finance",
+    authMiddleware.authorize("teachers", "create"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/teachers": "/teachers",
     }),
   );
 
-  // Messaging Service routes - Protected with auth
-  router.use(
-    "/messages",
+  router.patch(
+    "/education/teachers/:id",
     authMiddleware.authenticate,
+    authMiddleware.authorize("teachers", "update"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/teachers": "/teachers",
+    }),
+  );
+
+  // ========== MESSAGING SERVICE ROUTES ==========
+
+  // Messages
+  router.post(
+    "/messaging/messages",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("messages", "create"),
     ServiceRouter.createProxy(serviceUrls.messaging, {
-      "^/api/messages": "/messages",
+      "^/api/messaging/messages": "/messages",
     }),
   );
 
-  // Mobility Service routes - Protected with auth
-  router.use(
-    "/mobility",
+  router.get(
+    "/messaging/messages",
     authMiddleware.authenticate,
+    authMiddleware.authorize("messages", "read"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/messages": "/messages",
+    }),
+  );
+
+  router.delete(
+    "/messaging/messages/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("messages", "delete"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/messages": "/messages",
+    }),
+  );
+
+  // Notifications
+  router.get(
+    "/messaging/notifications",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("notifications", "read"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/notifications": "/notifications",
+    }),
+  );
+
+  router.patch(
+    "/messaging/notifications/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("notifications", "dismiss"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/notifications": "/notifications",
+    }),
+  );
+
+  // Announcements
+  router.get(
+    "/messaging/announcements",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("announcements", "read"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/announcements": "/announcements",
+    }),
+  );
+
+  router.post(
+    "/messaging/announcements",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("announcements", "create"),
+    ServiceRouter.createProxy(serviceUrls.messaging, {
+      "^/api/messaging/announcements": "/announcements",
+    }),
+  );
+
+  // ========== MOBILITY SERVICE ROUTES ==========
+
+  // Location tracking
+  router.get(
+    "/mobility/location",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("location", "read"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility": "/mobility",
+      "^/api/mobility/location": "/location",
+    }),
+  );
+
+  router.post(
+    "/mobility/location",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("location", "broadcast"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/location": "/location",
+    }),
+  );
+
+  // Routes
+  router.get(
+    "/mobility/routes",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("routes", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/routes": "/routes",
+    }),
+  );
+
+  router.post(
+    "/mobility/routes",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("routes", "manage"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/routes": "/routes",
+    }),
+  );
+
+  // Trips
+  router.post(
+    "/mobility/trips",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("trips", "create"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/trips": "/trips",
+    }),
+  );
+
+  router.get(
+    "/mobility/trips",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("trips", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/trips": "/trips",
+    }),
+  );
+
+  router.patch(
+    "/mobility/trips/:id",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("trips", "update"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility/trips": "/trips",
+    }),
+  );
+
+  // ========== FINANCE SERVICE ROUTES ==========
+
+  // Fees
+  router.get(
+    "/finance/fees",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("fees", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/fees": "/fees",
+    }),
+  );
+
+  router.post(
+    "/finance/fees",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("fees", "manage"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/fees": "/fees",
+    }),
+  );
+
+  // Payments
+  router.post(
+    "/finance/payments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("fees", "pay"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/payments": "/payments",
+    }),
+  );
+
+  router.get(
+    "/finance/payments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("payments", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/payments": "/payments",
+    }),
+  );
+
+  // Receipts
+  router.get(
+    "/finance/receipts",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("receipts", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/receipts": "/receipts",
+    }),
+  );
+
+  router.get(
+    "/finance/receipts/:id/download",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("receipts", "download"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/receipts": "/receipts",
     }),
   );
 

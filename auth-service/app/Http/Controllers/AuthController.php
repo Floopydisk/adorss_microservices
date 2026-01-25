@@ -35,6 +35,8 @@ class AuthController extends Controller
             'role' => 'required|string|in:' . implode(',', $this->allowedRoles),
             'phone' => 'nullable|string|max:32',
             'school_id' => 'nullable|string|max:64',
+            'organization_id' => 'nullable|integer',
+            'organization_type' => 'nullable|string|in:school,fleet,admin_org',
         ]);
 
         if ($validator->fails()) {
@@ -47,6 +49,8 @@ class AuthController extends Controller
 
         $data = $validator->validated();
         $role = $data['role'];
+        $organizationId = $data['organization_id'] ?? null;
+        $organizationType = $data['organization_type'] ?? 'school';
 
         $status = 'active';
         $verificationStatus = 'unverified';
@@ -66,6 +70,26 @@ class AuthController extends Controller
             'status' => $status,
             'verification_status' => $verificationStatus,
         ]);
+
+        // Create UserRole entry
+        $userRole = $user->userRoles()->create([
+            'role' => $role,
+            'organization_id' => $organizationId ?? $data['school_id'] ?? null,
+            'organization_type' => $organizationType,
+            'is_active' => true,
+        ]);
+
+        // Update active_role_id
+        $user->update(['active_role_id' => $userRole->id]);
+
+        // Log registration
+        \App\Models\AuditLog::logSuccess(
+            $user->id,
+            'auth.register',
+            'account_created',
+            null,
+            ['role' => $role, 'organization_id' => $organizationId]
+        );
 
         $token = JWTAuth::fromUser($user);
 
@@ -123,7 +147,11 @@ class AuthController extends Controller
         try {
             $token = JWTAuth::fromUser($user);
             $user->forceFill(['last_login_at' => now()])->save();
+
+            // Log successful login
+            \App\Models\AuditLog::logLoginAttempt($user->id, true);
         } catch (JWTException $e) {
+            \App\Models\AuditLog::logLoginAttempt($user->id, false, 'Token creation failed');
             return response()->json([
                 'success' => false,
                 'message' => 'Could not create token',
@@ -193,5 +221,135 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Logged out',
         ]);
+    }
+
+    /**
+     * Get all roles available to authenticated user
+     * 
+     * Returns list of roles with their organization context and permissions
+     * 
+     * GET /auth/me/roles
+     */
+    public function listUserRoles()
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'User not found'], 404);
+            }
+
+            $roles = $user->getAllRoles()
+                ->map(function ($userRole) {
+                    return [
+                        'id' => $userRole->id,
+                        'role' => $userRole->role,
+                        'is_active' => $userRole->is_active,
+                        'organization_id' => $userRole->organization_id,
+                        'organization_type' => $userRole->organization_type,
+                        'context' => $userRole->getOrganizationContext(),
+                        'permissions' => $userRole->getPermissions()
+                            ->map(fn($p) => [
+                                'resource' => $p->resource,
+                                'action' => $p->action,
+                                'name' => $p->name,
+                            ])
+                            ->values(),
+                        'assigned_at' => $userRole->assigned_at,
+                        'expires_at' => $userRole->expires_at,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'count' => $roles->count(),
+                'roles' => $roles,
+                'active_role' => $user->getActiveRole()?->id,
+            ]);
+        } catch (JWTException $e) {
+            return response()->json(['success' => false, 'message' => 'Token invalid'], 401);
+        }
+    }
+
+    /**
+     * Switch to a different role
+     * 
+     * User can only switch to roles they already have.
+     * Issues new JWT token with switched role context.
+     * 
+     * POST /auth/switch-role
+     * 
+     * Request:
+     * {
+     *   "user_role_id": 123
+     * }
+     */
+    public function switchRole(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_role_id' => 'required|integer|exists:user_roles,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'User not found'], 404);
+            }
+
+            $userRoleId = $request->input('user_role_id');
+
+            // Verify user actually has this role
+            $userRole = $user->activeRoles()->find($userRoleId);
+            if (!$userRole) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found or not active for this user',
+                ], 403);
+            }
+
+            // Switch role
+            if (!$user->switchRole($userRoleId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to switch role',
+                ], 500);
+            }
+
+            // Issue new token with new role context
+            $newToken = JWTAuth::fromUser($user);
+
+            // Log role switch
+            \App\Models\AuditLog::logSuccess(
+                $user->id,
+                'auth.role_switch',
+                'role_switched',
+                null,
+                [
+                    'from_role_id' => null,
+                    'to_role_id' => $userRoleId,
+                    'to_role_name' => $userRole->role,
+                    'organization_id' => $userRole->organization_id,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role switched successfully',
+                'active_role' => $userRole->role,
+                'organization_id' => $userRole->organization_id,
+                'organization_type' => $userRole->organization_type,
+                'token' => $newToken,
+                'expires_in' => $this->tokenTtlSeconds(),
+            ]);
+        } catch (JWTException $e) {
+            return response()->json(['success' => false, 'message' => 'Token invalid'], 401);
+        }
     }
 }
