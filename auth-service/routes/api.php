@@ -4,9 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PhoneAuthController;
 use App\Http\Controllers\PermissionController;
-use App\Http\Middleware\RateLimitAuth;
 
-Route::prefix('auth')->middleware(RateLimitAuth::class)->group(function () {
+Route::prefix('auth')->middleware('rate_limit_auth')->group(function () {
     // Legacy email/password registration and login
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
