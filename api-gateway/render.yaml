@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: api-gateway
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_SERVICE_URL
+        value: https://auth.adorss.com
+      - key: LOG_LEVEL
+        value: info
