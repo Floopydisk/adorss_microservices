@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: finance-service
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8004
+      - key: MONGODB_URI
+        sync: false # Set this in Render dashboard (sensitive)
+      - key: EDUCATION_SERVICE_URL
+        sync: false # Set this in Render dashboard
