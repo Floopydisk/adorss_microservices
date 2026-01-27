@@ -250,6 +250,162 @@ export function createServiceRoutes(
     }),
   );
 
+  // ========== PARENT-SPECIFIC EDUCATION ROUTES ==========
+  // These routes are specifically designed for the parent role
+
+  // Parent Dashboard - overview of all linked children
+  router.get(
+    "/education/parent/dashboard",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("education", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Get all children linked to this parent
+  router.get(
+    "/education/parent/children",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("education", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Get announcements for parents
+  router.get(
+    "/education/parent/announcements",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("announcements", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - assignments
+  router.get(
+    "/education/parent/children/:studentId/assignments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("assignments", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - grades
+  router.get(
+    "/education/parent/children/:studentId/grades",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("grades", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - attendance
+  router.get(
+    "/education/parent/children/:studentId/attendance",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("attendance", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - timetable
+  router.get(
+    "/education/parent/children/:studentId/timetable",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("timetable", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - results
+  router.get(
+    "/education/parent/children/:studentId/results",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("results", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Child-specific routes - grade report
+  router.get(
+    "/education/parent/children/:studentId/report",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("grades", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Parent link request - parent requests to link with a child
+  router.post(
+    "/education/parent/link-request",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("education", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // Parent update own link permissions
+  router.patch(
+    "/education/parent/links/:linkId/permissions",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("education", "read"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/parent": "/api/parent",
+    }),
+  );
+
+  // ========== EDUCATION ADMIN ROUTES ==========
+  // Administrative endpoints for school admins
+
+  // Get all parent-student links
+  router.get(
+    "/education/admin/parent-links",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "manage"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/admin": "/api/admin",
+    }),
+  );
+
+  // Create a parent-student link
+  router.post(
+    "/education/admin/parent-links",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "manage"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/admin": "/api/admin",
+    }),
+  );
+
+  // Verify a pending parent-student link
+  router.patch(
+    "/education/admin/parent-links/:linkId/verify",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "manage"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/admin": "/api/admin",
+    }),
+  );
+
+  // Delete a parent-student link
+  router.delete(
+    "/education/admin/parent-links/:linkId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("students", "manage"),
+    ServiceRouter.createProxy(serviceUrls.education, {
+      "^/api/education/admin": "/api/admin",
+    }),
+  );
+
   // ========== MESSAGING SERVICE ROUTES ==========
 
   // Messages
@@ -387,6 +543,60 @@ export function createServiceRoutes(
   );
 
   // ========== FINANCE SERVICE ROUTES ==========
+
+  // ========== PARENT-SPECIFIC FINANCE ROUTES ==========
+
+  // Get all fees grouped by school (for parent)
+  router.get(
+    "/finance/parent/fees",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("fees", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/parent": "/api/parent",
+    }),
+  );
+
+  // Get fees for a specific child
+  router.get(
+    "/finance/parent/fees/:studentId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("fees", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/parent": "/api/parent",
+    }),
+  );
+
+  // Get parent's payment history
+  router.get(
+    "/finance/parent/payments",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("payments", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/parent": "/api/parent",
+    }),
+  );
+
+  // Get parent's receipts
+  router.get(
+    "/finance/parent/receipts",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("receipts", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/parent": "/api/parent",
+    }),
+  );
+
+  // Get a specific receipt
+  router.get(
+    "/finance/parent/receipts/:receiptId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("receipts", "read"),
+    ServiceRouter.createProxy(serviceUrls.finance, {
+      "^/api/finance/parent": "/api/parent",
+    }),
+  );
+
+  // ========== GENERAL FINANCE ROUTES ==========
 
   // Fees
   router.get(
