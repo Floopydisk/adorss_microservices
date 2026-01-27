@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->string('role');
 
             // Organization context: school_id, fleet_id, admin_org_id, etc.
-            $table->nullableUnsignedBigInteger('organization_id')->comment('ID of organization (school, fleet, etc.)');
+            $table->unsignedBigInteger('organization_id')->nullable()->comment('ID of organization (school, fleet, etc.)');
 
             // Type of organization: school, fleet, admin_org, independent
             $table->string('organization_type')->default('school')->comment('Type of organization context');

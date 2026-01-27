@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->id();
 
             // User performing the action (nullable for system actions)
-            $table->nullableUnsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
 
             // Category of event
             $table->enum('category', [

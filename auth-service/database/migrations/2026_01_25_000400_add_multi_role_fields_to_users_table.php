@@ -15,7 +15,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->nullableUnsignedBigInteger('active_role_id')
+            $table->unsignedBigInteger('active_role_id')->nullable()
                 ->after('school_id')
                 ->comment('Currently active role (for faster lookups)');
 

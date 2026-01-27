@@ -29,7 +29,7 @@ return new class extends Migration {
             $table->string('relationship_type');
 
             // Organization context (school_id, fleet_id, etc.)
-            $table->nullableUnsignedBigInteger('organization_id');
+            $table->unsignedBigInteger('organization_id')->nullable();
             $table->string('organization_type')->default('school');
 
             // Is this link active? (parent might deactivate monitoring a child)
