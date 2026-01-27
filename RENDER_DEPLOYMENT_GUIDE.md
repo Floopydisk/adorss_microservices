@@ -107,7 +107,7 @@ nano /home/username/public_html/auth-service/.env
 APP_NAME=ADORSS_Auth
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://auth.adorss.com
+APP_URL=https://auth.adorss.ng
 
 # Database (from Step 1)
 DB_CONNECTION=pgsql
@@ -126,11 +126,11 @@ JWT_SECRET=YOUR_GENERATED_SECRET_HERE
 
 # Mail configuration (if using company email)
 MAIL_DRIVER=smtp
-MAIL_HOST=mail.adorss.com
+MAIL_HOST=mail.adorss.ng
 MAIL_PORT=587
-MAIL_USERNAME=noreply@adorss.com
+MAIL_USERNAME=noreply@adorss.ng
 MAIL_PASSWORD=your_email_password
-MAIL_FROM_ADDRESS=noreply@adorss.com
+MAIL_FROM_ADDRESS=noreply@adorss.ng
 
 # App port (cPanel handles this, usually 80/443)
 APP_PORT=80
@@ -181,7 +181,7 @@ chmod -R 755 bootstrap/cache/
 
 1. Go to cPanel → Domains
 2. Point your domain to `public_html/auth-service/public`
-3. Or create subdomain: `auth.adorss.com` pointing to same folder
+3. Or create subdomain: `auth.adorss.ng` pointing to same folder
 
 **Or using .htaccess (automatic on cPanel):**
 
@@ -191,17 +191,17 @@ The Laravel `.htaccess` file should already be in `public/` folder.
 
 ```bash
 # From your local machine
-curl -X GET https://auth.adorss.com/health
+curl -X GET https://auth.adorss.ng/health
 
 # Should return:
 # {"status": "ok", "service": "auth-service"}
 
 # Test registration
-curl -X POST https://auth.adorss.com/auth/register \
+curl -X POST https://auth.adorss.ng/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test Admin",
-    "email": "admin@adorss.com",
+    "email": "admin@adorss.ng",
     "password": "SecurePassword123!",
     "role": "admin",
     "organization_id": 1,
@@ -226,7 +226,7 @@ curl -X POST https://auth.adorss.com/auth/register \
 crontab -e
 
 # Add this line (runs health check every 5 minutes)
-*/5 * * * * curl -s https://auth.adorss.com/health > /dev/null 2>&1
+*/5 * * * * curl -s https://auth.adorss.ng/health > /dev/null 2>&1
 
 # If fails, you can setup alerts
 ```
@@ -312,14 +312,14 @@ git push -u origin main
 3. Add these variables:
 
 ```
-AUTH_SERVICE_URL=https://auth.adorss.com
+AUTH_SERVICE_URL=https://auth.adorss.ng
 NODE_ENV=production
 PORT=10000
 LOG_LEVEL=info
 RATE_LIMIT_ENABLED=true
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
-CORS_ORIGINS=https://app.adorss.com,https://admin.adorss.com
+CORS_ORIGINS=https://app.adorss.ng,https://admin.adorss.ng
 JWT_SECRET=same_as_auth_service_JWT_SECRET
 ```
 
@@ -377,7 +377,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: AUTH_SERVICE_URL
-        value: https://auth.adorss.com
+        value: https://auth.adorss.ng
       - key: LOG_LEVEL
         value: info
 ```
@@ -394,7 +394,7 @@ services:
    - Run `npm install`
    - Run `npm run build`
    - Start the service
-   - Assign you a URL like: `api-gateway-xxxxx.onrender.com`
+   - Assign you a URL like: `api-gateway-axg2.onrender.com`
 
 **First deployment takes 5-10 minutes**
 
@@ -404,13 +404,13 @@ services:
 # Get the Render URL from dashboard, then:
 
 # Check health
-curl https://api-gateway-xxxxx.onrender.com/health
+curl https://api-gateway-axg2.onrender.com/health
 
 # Test auth endpoint (should redirect to auth service)
-curl -X POST https://api-gateway-xxxxx.onrender.com/auth/login \
+curl -X POST https://api-gateway-axg2.onrender.com/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@adorss.com",
+    "email": "admin@adorss.ng",
     "password": "SecurePassword123!",
     "role": "admin"
   }'
@@ -420,10 +420,10 @@ curl -X POST https://api-gateway-xxxxx.onrender.com/auth/login \
 
 ### Step 8: Configure Custom Domain (Optional)
 
-**To use `api.adorss.com` instead of `api-gateway-xxxxx.onrender.com`:**
+**To use `api.adorss.ng` instead of `api-gateway-axg2.onrender.com`:**
 
 1. In Render Dashboard → Settings
-2. Add Custom Domain: `api.adorss.com`
+2. Add Custom Domain: `api.adorss.ng`
 3. Follow DNS instructions (update your domain registrar)
 4. Wait for DNS propagation (1-24 hours)
 
@@ -471,8 +471,8 @@ curl -X POST https://api-gateway-xxxxx.onrender.com/auth/login \
 3. Set environment variables:
 
 ```
-AUTH_SERVICE_URL=https://auth.adorss.com
-API_GATEWAY_URL=https://api.adorss.com
+AUTH_SERVICE_URL=https://auth.adorss.ng
+API_GATEWAY_URL=https://api.adorss.ng
 NODE_ENV=production
 PORT=10000
 DATABASE_URL=postgresql://user:pass@host:5432/education_prod
@@ -491,11 +491,11 @@ NODE_ENV=production
 PORT=10000  # Render assigns automatically
 
 # Authentication
-AUTH_SERVICE_URL=https://auth.adorss.com
+AUTH_SERVICE_URL=https://auth.adorss.ng
 JWT_SECRET=from_auth_service
 
 # API Gateway (for services that need to call it)
-API_GATEWAY_URL=https://api.adorss.com
+API_GATEWAY_URL=https://api.adorss.ng
 
 # Database (if service has its own DB)
 DATABASE_URL=postgresql://user:password@host:5432/database_name
@@ -525,11 +525,11 @@ EDUCATION_SERVICE_URL=https://education-service-xxxxx.onrender.com
 
 ```bash
 # Test 1: Health check
-curl -X GET https://auth.adorss.com/health
+curl -X GET https://auth.adorss.ng/health
 # Expected: {"status": "ok"}
 
 # Test 2: Register
-curl -X POST https://auth.adorss.com/auth/register \
+curl -X POST https://auth.adorss.ng/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Teacher",
@@ -542,7 +542,7 @@ curl -X POST https://auth.adorss.com/auth/register \
 # Expected: {"success": true, "token": "...", "user": {...}}
 
 # Test 3: Login
-curl -X POST https://auth.adorss.com/auth/login \
+curl -X POST https://auth.adorss.ng/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@school.com",
@@ -552,7 +552,7 @@ curl -X POST https://auth.adorss.com/auth/login \
 # Expected: {"success": true, "token": "...", "expires_in": 3600}
 
 # Test 4: Get my roles
-curl -X GET https://auth.adorss.com/auth/me/roles \
+curl -X GET https://auth.adorss.ng/auth/me/roles \
   -H "Authorization: Bearer YOUR_TOKEN"
 # Expected: List of roles
 ```
@@ -561,11 +561,11 @@ curl -X GET https://auth.adorss.com/auth/me/roles \
 
 ```bash
 # Test 1: Health check
-curl -X GET https://api.adorss.com/health
+curl -X GET https://api.adorss.ng/health
 # Expected: {"status": "ok", "gateway": "active"}
 
 # Test 2: Login through gateway
-curl -X POST https://api.adorss.com/auth/login \
+curl -X POST https://api.adorss.ng/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@school.com",
@@ -575,11 +575,11 @@ curl -X POST https://api.adorss.com/auth/login \
 # Expected: Same as direct auth service (gateway proxies it)
 
 # Test 3: Protected endpoint (should fail without token)
-curl -X GET https://api.adorss.com/api/education/assignments
+curl -X GET https://api.adorss.ng/api/education/assignments
 # Expected: {"error": "Unauthorized"}
 
 # Test 4: Protected endpoint (with token)
-curl -X GET https://api.adorss.com/api/education/assignments \
+curl -X GET https://api.adorss.ng/api/education/assignments \
   -H "Authorization: Bearer YOUR_TOKEN"
 # Expected: [] (empty for now, education service not ready) or data
 ```
@@ -592,7 +592,7 @@ brew install httpd  # macOS
 # or apt-get install apache2-utils  # Linux
 
 # Test with 100 concurrent requests
-ab -n 1000 -c 100 https://api.adorss.com/health
+ab -n 1000 -c 100 https://api.adorss.ng/health
 
 # Look for:
 # - Requests per second (should be >100)
@@ -727,12 +727,12 @@ Once deployed:
 
 | Service           | URL                          | Status    |
 | ----------------- | ---------------------------- | --------- |
-| Auth Service      | https://auth.adorss.com      | **Ready** |
-| API Gateway       | https://api.adorss.com       | **Ready** |
-| Education Service | https://education.adorss.com | Pending   |
-| Messaging Service | https://messaging.adorss.com | Pending   |
-| Finance Service   | https://finance.adorss.com   | Pending   |
-| Mobility Service  | https://mobility.adorss.com  | Pending   |
+| Auth Service      | https://auth.adorss.ng      | **Ready** |
+| API Gateway       | https://api.adorss.ng       | **Ready** |
+| Education Service | https://education.adorss.ng | Pending   |
+| Messaging Service | https://messaging.adorss.ng | Pending   |
+| Finance Service   | https://finance.adorss.ng   | Pending   |
+| Mobility Service  | https://mobility.adorss.ng  | Pending   |
 
 ---
 
@@ -745,7 +745,7 @@ Once deployed:
 **Fix:**
 
 1. On Render → Environment variables
-2. Check AUTH_SERVICE_URL is exactly `https://auth.adorss.com`
+2. Check AUTH_SERVICE_URL is exactly `https://auth.adorss.ng`
 3. Check auth service is actually running (curl test it)
 4. Restart API Gateway service
 
