@@ -297,6 +297,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'parent' => [
                 // Parents can monitor their children's progress
+                ['resource' => 'education', 'action' => 'read'], // Access education service dashboard
                 ['resource' => 'assignments', 'action' => 'read'],
                 ['resource' => 'grades', 'action' => 'read'],
                 ['resource' => 'attendance', 'action' => 'read'],
