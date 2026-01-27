@@ -153,7 +153,8 @@ class PhoneAuthController extends Controller
             'registration_token' => 'required|string',
             'email' => 'required|email|unique:users,email',
             'name' => 'required|string|max:255',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -225,6 +226,93 @@ class PhoneAuthController extends Controller
             'email_verification_required' => true,
             'email_verification_expires_in_days' => 7,
         ], 201);
+    }
+
+    /**
+     * Request OTP for Login (validates user exists)
+     * POST /auth/phone/request-login-otp
+     */
+    public function requestLoginOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|regex:/^[0-9+\-() ]{7,20}$/',
+            'role' => 'required|string|in:student,parent,teacher,driver,admin,school_admin,independent_teacher',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $phone = $request->input('phone');
+        $role = $request->input('role');
+
+        // Check if user exists with this phone and role
+        $user = User::where('phone', $phone)
+            ->where('role', $role)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No account found with this phone number and role',
+            ], 404);
+        }
+
+        // Check if account is locked
+        if ($user->isLocked()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account is locked: ' . $user->lock_reason,
+            ], 403);
+        }
+
+        // Check if account is active
+        if ($user->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Account is not active',
+            ], 403);
+        }
+
+        // Generate 6-digit OTP
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $expiresAt = now()->addMinutes(10);
+
+        PhoneVerification::updateOrCreate(
+            ['phone' => $phone],
+            [
+                'otp' => $otp,
+                'expires_at' => $expiresAt,
+                'verified' => false,
+                'verified_at' => null,
+            ]
+        );
+
+        // Send OTP via AWS SNS
+        $smsService = new SMSService();
+        $smsSent = $smsService->sendOTP($phone, $otp);
+
+        if (!$smsSent) {
+            Log::error('Failed to send OTP for phone login', [
+                'phone' => substr($phone, -4),
+                'role' => $role,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send OTP. Please try again.',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your phone. It will expire in 10 minutes.',
+            'expires_in_minutes' => 10,
+        ]);
     }
 
     /**
@@ -449,6 +537,160 @@ class PhoneAuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Verification email sent. Please check your inbox.',
+        ]);
+    }
+
+    /**
+     * Request password reset email
+     * POST /auth/forgot-password
+     */
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $email = $request->input('email');
+
+        // Rate limiting (max 3 requests per hour per email)
+        $cacheKey = "password_reset:{$email}";
+        $requestCount = cache()->get($cacheKey, 0);
+
+        if ($requestCount >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Too many password reset requests. Please try again in 1 hour.',
+            ], 429);
+        }
+
+        // Check if user exists
+        $user = User::where('email', $email)->first();
+
+        // Always return success to prevent email enumeration
+        // But only send email if user exists
+        if ($user) {
+            // Invalidate any existing reset tokens for this email
+            \App\Models\PasswordReset::where('email', $email)
+                ->where('used', false)
+                ->update(['used' => true, 'used_at' => now()]);
+
+            // Generate new reset token
+            $resetToken = Str::random(64);
+            $expiresInMinutes = 60;
+
+            \App\Models\PasswordReset::create([
+                'email' => $email,
+                'token' => $resetToken,
+                'expires_at' => now()->addMinutes($expiresInMinutes),
+                'used' => false,
+            ]);
+
+            // Queue password reset email
+            \App\Jobs\SendPasswordReset::dispatch($user, $resetToken, $expiresInMinutes);
+
+            Log::info('Password reset requested', [
+                'user_id' => $user->id,
+                'email' => $email,
+            ]);
+        } else {
+            Log::info('Password reset requested for non-existent email', [
+                'email' => $email,
+            ]);
+        }
+
+        // Increment rate limit counter
+        cache()->put($cacheKey, $requestCount + 1, now()->addHour());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'If an account exists with this email, you will receive a password reset link shortly.',
+        ]);
+    }
+
+    /**
+     * Reset password with token
+     * POST /auth/reset-password
+     */
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'token' => 'required|string|size:64',
+            'password' => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $email = $request->input('email');
+        $token = $request->input('token');
+        $password = $request->input('password');
+
+        // Find the password reset record
+        $passwordReset = \App\Models\PasswordReset::where('email', $email)
+            ->where('token', $token)
+            ->first();
+
+        if (!$passwordReset) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid password reset token',
+            ], 400);
+        }
+
+        if (!$passwordReset->isValid()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password reset token has expired or already been used',
+            ], 400);
+        }
+
+        // Find the user
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        // Update the password
+        $user->update([
+            'password' => Hash::make($password),
+        ]);
+
+        // Mark token as used
+        $passwordReset->markUsed();
+
+        // Invalidate all other reset tokens for this email
+        \App\Models\PasswordReset::where('email', $email)
+            ->where('id', '!=', $passwordReset->id)
+            ->where('used', false)
+            ->update(['used' => true, 'used_at' => now()]);
+
+        Log::info('Password reset successful', [
+            'user_id' => $user->id,
+            'email' => $email,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password has been reset successfully. You can now log in with your new password.',
         ]);
     }
 }

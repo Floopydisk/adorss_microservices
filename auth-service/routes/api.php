@@ -15,12 +15,17 @@ Route::prefix('auth')->middleware('rate_limit_auth')->group(function () {
         Route::post('request-otp', [PhoneAuthController::class, 'requestOtp'])->name('auth.phone.request-otp');
         Route::post('verify-otp', [PhoneAuthController::class, 'verifyOtp']);
         Route::post('complete-registration', [PhoneAuthController::class, 'completeRegistration'])->name('auth.phone.complete-registration');
+        Route::post('request-login-otp', [PhoneAuthController::class, 'requestLoginOtp'])->name('auth.phone.request-login-otp');
         Route::post('login', [PhoneAuthController::class, 'loginWithPhone'])->name('auth.phone.login');
     });
 
     // Email verification (accessible without auth, with rate limiting)
     Route::post('verify-email', [PhoneAuthController::class, 'verifyEmail']);
     Route::post('resend-verification-email', [PhoneAuthController::class, 'resendVerificationEmail']);
+
+    // Password reset (accessible without auth, with rate limiting)
+    Route::post('forgot-password', [PhoneAuthController::class, 'forgotPassword'])->name('auth.forgot-password');
+    Route::post('reset-password', [PhoneAuthController::class, 'resetPassword'])->name('auth.reset-password');
 
     // Protected endpoints
     Route::middleware('auth:api')->group(function () {
