@@ -1,0 +1,14 @@
+services:
+  - type: cron
+    name: health-check-cron
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    schedule: "*/14 * * * * *"
+    envVars:
+      - key: API_GATEWAY_URL
+        value: https://api-gateway.adorss.com
+      - key: AUTH_SERVICE_URL
+        value: https://auth.adorss.com
+      - key: NODE_ENV
+        value: production
