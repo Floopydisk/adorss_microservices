@@ -9,6 +9,7 @@
 ## WHY POSTGRESQL?
 
 **Advantages over MySQL:**
+
 - Better JSON support (for context fields, metadata)
 - More robust transaction handling
 - Better performance for complex queries
@@ -111,12 +112,12 @@ php artisan db:seed --class=RolesAndPermissionsSeeder --force
 
 ### Render PostgreSQL Plans
 
-| Plan | Storage | Connections | Backups | Cost |
-|------|---------|-------------|---------|------|
-| Free | 1 GB | 97 | Daily (7 days) | $0 |
-| Starter | 10 GB | 97 | Daily (7 days) | $7/mo |
-| Standard | 100 GB | 197 | Daily (90 days) | $20/mo |
-| Pro | 512 GB | 397 | Daily (365 days) | $90/mo |
+| Plan     | Storage | Connections | Backups          | Cost   |
+| -------- | ------- | ----------- | ---------------- | ------ |
+| Free     | 1 GB    | 97          | Daily (7 days)   | $0     |
+| Starter  | 10 GB   | 97          | Daily (7 days)   | $7/mo  |
+| Standard | 100 GB  | 197         | Daily (90 days)  | $20/mo |
+| Pro      | 512 GB  | 397         | Daily (365 days) | $90/mo |
 
 **Recommendation:** Start with **Starter ($7)** for production.
 
@@ -507,7 +508,7 @@ SELECT pg_size_pretty(pg_database_size('adorss_auth_prod'));
 ### Check Table Sizes
 
 ```sql
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
@@ -519,7 +520,7 @@ ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 ### Check Slow Queries
 
 ```sql
-SELECT 
+SELECT
     pid,
     now() - pg_stat_activity.query_start AS duration,
     query
@@ -537,6 +538,7 @@ ORDER BY duration DESC;
 **Cause:** Network issue, wrong host, or firewall blocking
 
 **Fix:**
+
 1. Verify host and port: `telnet host 5432`
 2. Check firewall allows PostgreSQL (port 5432)
 3. Verify SSL mode: Try `DB_SSLMODE=disable` temporarily (for testing only)
@@ -547,6 +549,7 @@ ORDER BY duration DESC;
 **Cause:** Wrong password or username
 
 **Fix:**
+
 1. Double-check username and password (copy-paste to avoid typos)
 2. Verify user exists: `psql -h host -U adorss_user -d postgres -c "\du"`
 3. Reset password if needed
@@ -578,9 +581,9 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO adorss_user;
 SELECT count(*) FROM pg_stat_activity;
 
 -- Kill idle connections (as superuser)
-SELECT pg_terminate_backend(pid) 
-FROM pg_stat_activity 
-WHERE state = 'idle' 
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE state = 'idle'
 AND state_change < now() - interval '5 minutes';
 ```
 
@@ -602,16 +605,16 @@ Or increase max connections (Render: upgrade plan, or contact support)
 
 ## QUICK REFERENCE
 
-| Task | Command |
-|------|---------|
-| Test connection | `php artisan tinker` → `DB::connection()->getPdo()` |
-| Run migrations | `php artisan migrate` |
-| Fresh migrations | `php artisan migrate:fresh` |
-| Seed database | `php artisan db:seed --class=RolesAndPermissionsSeeder` |
-| Check status | `php artisan migrate:status` |
-| Backup database | `pg_dump -h host -U user -d db > backup.sql` |
-| Restore database | `psql -h host -U user -d db < backup.sql` |
-| Check DB version | `psql -c "SELECT version()"` |
+| Task             | Command                                                 |
+| ---------------- | ------------------------------------------------------- |
+| Test connection  | `php artisan tinker` → `DB::connection()->getPdo()`     |
+| Run migrations   | `php artisan migrate`                                   |
+| Fresh migrations | `php artisan migrate:fresh`                             |
+| Seed database    | `php artisan db:seed --class=RolesAndPermissionsSeeder` |
+| Check status     | `php artisan migrate:status`                            |
+| Backup database  | `pg_dump -h host -U user -d db > backup.sql`            |
+| Restore database | `psql -h host -U user -d db < backup.sql`               |
+| Check DB version | `psql -c "SELECT version()"`                            |
 
 ---
 
@@ -643,6 +646,7 @@ DB_SSLMODE=require
 ```
 
 **Why this setup?**
+
 - ✅ Managed database (no server maintenance)
 - ✅ Automatic backups
 - ✅ Fast connection to cPanel
