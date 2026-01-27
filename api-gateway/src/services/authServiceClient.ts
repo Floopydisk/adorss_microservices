@@ -40,13 +40,13 @@ class AuthServiceClient {
     }
   }
 
-  async requestPhoneOtp(phone: string, countryCode: string = "+1") {
+  async requestPhoneOtp(phone: string, role: string) {
     try {
       const response = await axios.post(
         `${this.baseUrl}/auth/phone/request-otp`,
         {
           phone,
-          country_code: countryCode,
+          role,
         },
         {
           timeout: 5000,
@@ -58,13 +58,14 @@ class AuthServiceClient {
     }
   }
 
-  async verifyPhoneOtp(phone: string, otp: string) {
+  async verifyPhoneOtp(phone: string, otp: string, role: string) {
     try {
       const response = await axios.post(
         `${this.baseUrl}/auth/phone/verify-otp`,
         {
           phone,
           otp,
+          role,
         },
         {
           timeout: 5000,
@@ -77,10 +78,11 @@ class AuthServiceClient {
   }
 
   async completePhoneRegistration(payload: {
-    phone: string;
-    otp: string;
+    registration_token: string;
     name: string;
     email: string;
+    password: string;
+    password_confirmation: string;
   }) {
     try {
       const response = await axios.post(
@@ -96,12 +98,32 @@ class AuthServiceClient {
     }
   }
 
-  async loginWithPhone(phone: string) {
+  async loginWithPhone(phone: string, otp: string, role: string) {
     try {
       const response = await axios.post(
         `${this.baseUrl}/auth/phone/login`,
         {
           phone,
+          otp,
+          role,
+        },
+        {
+          timeout: 5000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: error.message };
+    }
+  }
+
+  async requestLoginOtp(phone: string, role: string) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/auth/phone/request-login-otp`,
+        {
+          phone,
+          role,
         },
         {
           timeout: 5000,
@@ -137,6 +159,48 @@ class AuthServiceClient {
         `${this.baseUrl}/auth/resend-verification-email`,
         {
           email,
+        },
+        {
+          timeout: 5000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: error.message };
+    }
+  }
+
+  async forgotPassword(email: string) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/auth/forgot-password`,
+        {
+          email,
+        },
+        {
+          timeout: 5000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: error.message };
+    }
+  }
+
+  async resetPassword(
+    email: string,
+    token: string,
+    password: string,
+    passwordConfirmation: string,
+  ) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/auth/reset-password`,
+        {
+          email,
+          token,
+          password,
+          password_confirmation: passwordConfirmation,
         },
         {
           timeout: 5000,

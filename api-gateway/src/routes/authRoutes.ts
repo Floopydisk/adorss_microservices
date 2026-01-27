@@ -30,11 +30,8 @@ export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
   // Phone auth routes
   router.post("/phone/request-otp", async (req: Request, res: Response) => {
     try {
-      const { phone, country_code } = req.body;
-      const result = await authServiceClient.requestPhoneOtp(
-        phone,
-        country_code,
-      );
+      const { phone, role } = req.body;
+      const result = await authServiceClient.requestPhoneOtp(phone, role);
       res.json(result);
     } catch (error: any) {
       res.status(400).json(error);
@@ -43,8 +40,8 @@ export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
 
   router.post("/phone/verify-otp", async (req: Request, res: Response) => {
     try {
-      const { phone, otp } = req.body;
-      const result = await authServiceClient.verifyPhoneOtp(phone, otp);
+      const { phone, otp, role } = req.body;
+      const result = await authServiceClient.verifyPhoneOtp(phone, otp, role);
       res.json(result);
     } catch (error: any) {
       res.status(400).json(error);
@@ -67,13 +64,26 @@ export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
 
   router.post("/phone/login", async (req: Request, res: Response) => {
     try {
-      const { phone } = req.body;
-      const result = await authServiceClient.loginWithPhone(phone);
+      const { phone, otp, role } = req.body;
+      const result = await authServiceClient.loginWithPhone(phone, otp, role);
       res.json(result);
     } catch (error: any) {
       res.status(401).json(error);
     }
   });
+
+  router.post(
+    "/phone/request-login-otp",
+    async (req: Request, res: Response) => {
+      try {
+        const { phone, role } = req.body;
+        const result = await authServiceClient.requestLoginOtp(phone, role);
+        res.json(result);
+      } catch (error: any) {
+        res.status(error.status || 400).json(error);
+      }
+    },
+  );
 
   // Email verification
   router.post("/verify-email", async (req: Request, res: Response) => {
@@ -98,6 +108,32 @@ export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
       }
     },
   );
+
+  // Password reset
+  router.post("/forgot-password", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      const result = await authServiceClient.forgotPassword(email);
+      res.json(result);
+    } catch (error: any) {
+      res.status(error.status || 400).json(error);
+    }
+  });
+
+  router.post("/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { email, token, password, password_confirmation } = req.body;
+      const result = await authServiceClient.resetPassword(
+        email,
+        token,
+        password,
+        password_confirmation,
+      );
+      res.json(result);
+    } catch (error: any) {
+      res.status(error.status || 400).json(error);
+    }
+  });
 
   return router;
 }
