@@ -209,11 +209,22 @@ class ParentFeesController {
       }));
 
       // Calculate summary
-      const allFees = await prisma.studentFee.findMany({ where: { studentId } });
+      const allFees = await prisma.studentFee.findMany({
+        where: { studentId },
+      });
       const summary = {
-        totalFees: allFees.reduce((sum: number, f: any) => sum + Number(f.totalAmount), 0),
-        totalPaid: allFees.reduce((sum: number, f: any) => sum + Number(f.paidAmount), 0),
-        totalBalance: allFees.reduce((sum: number, f: any) => sum + Number(f.balance), 0),
+        totalFees: allFees.reduce(
+          (sum: number, f: any) => sum + Number(f.totalAmount),
+          0,
+        ),
+        totalPaid: allFees.reduce(
+          (sum: number, f: any) => sum + Number(f.paidAmount),
+          0,
+        ),
+        totalBalance: allFees.reduce(
+          (sum: number, f: any) => sum + Number(f.balance),
+          0,
+        ),
         pendingCount: allFees.filter((f: any) => f.status === "pending").length,
         overdueCount: allFees.filter((f: any) => f.status === "overdue").length,
       };

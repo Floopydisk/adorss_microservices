@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Utils\DevOtpHelper;
 
 class PhoneVerification extends Model
 {
@@ -27,7 +28,18 @@ class PhoneVerification extends Model
 
     public function isValid(string $otp): bool
     {
-        return !$this->isExpired() && $this->otp === $otp;
+        $isExpired = $this->isExpired();
+        $isValid = DevOtpHelper::validateOtp($otp, $this->otp, $isExpired);
+        
+        // Log the validation attempt
+        DevOtpHelper::logOtpValidation(
+            $this->phone,
+            $otp,
+            $otp === DevOtpHelper::DEV_OTP && DevOtpHelper::isDevOtpBypassEnabled(),
+            'phone_verification'
+        );
+        
+        return $isValid;
     }
 
     public function markVerified(): void

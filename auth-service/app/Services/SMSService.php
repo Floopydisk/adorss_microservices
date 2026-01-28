@@ -6,6 +6,7 @@ use Aws\Sns\SnsClient;
 use Aws\Exception\AwsException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Utils\DevOtpHelper;
 
 class SMSService
 {
@@ -26,6 +27,9 @@ class SMSService
     /**
      * Send OTP via AWS SNS
      * 
+     * In development mode with AWS SNS unavailable, logs the OTP instead
+     * and relies on static OTP "123456" bypass for testing.
+     * 
      * @param string $phone Phone number (international format: +1234567890)
      * @param string $otp 6-digit OTP code
      * @return bool Success/failure
@@ -38,6 +42,23 @@ class SMSService
             return false;
         }
 
+        // Development mode: Log OTP instead of sending via AWS SNS
+        if (DevOtpHelper::isDevOtpBypassEnabled()) {
+            Log::notice('📲 [DEV MODE] OTP Request - Use static OTP "123456" to bypass', [
+                'phone' => $this->maskPhone($phone),
+                'otp_generated' => $otp,
+                'dev_static_otp' => DevOtpHelper::DEV_OTP,
+                'aws_sns_status' => 'BYPASSED - Using static OTP',
+                'message' => DevOtpHelper::getDevModeMessage(),
+            ]);
+
+            // Increment rate limit counter even in dev mode
+            $this->incrementRateLimit($phone);
+
+            return true; // Consider it successful since we logged it
+        }
+
+        // Production mode: Send via AWS SNS
         $message = $this->formatOTPMessage($otp);
 
         try {
