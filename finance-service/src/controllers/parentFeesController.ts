@@ -85,26 +85,26 @@ class ParentFeesController {
         const childSummaries: ChildFeeSummary[] = schoolData.children.map(
           (child) => {
             const childFees = fees.filter(
-              (f) => f.studentId === child.id.toString(),
+              (f: any) => f.studentId === child.id.toString(),
             );
 
             const totalFees = childFees.reduce(
-              (sum, f) => sum + Number(f.totalAmount),
+              (sum: number, f: any) => sum + Number(f.totalAmount),
               0,
             );
             const totalPaid = childFees.reduce(
-              (sum, f) => sum + Number(f.paidAmount),
+              (sum: number, f: any) => sum + Number(f.paidAmount),
               0,
             );
             const balance = childFees.reduce(
-              (sum, f) => sum + Number(f.balance),
+              (sum: number, f: any) => sum + Number(f.balance),
               0,
             );
             const pendingItems = childFees.filter(
-              (f) => f.status === "pending",
+              (f: any) => f.status === "pending",
             ).length;
             const overdueItems = childFees.filter(
-              (f) => f.status === "overdue",
+              (f: any) => f.status === "overdue",
             ).length;
 
             schoolTotalFees += totalFees;
@@ -193,7 +193,7 @@ class ParentFeesController {
         prisma.studentFee.count({ where }),
       ]);
 
-      const feeItems: FeeItem[] = fees.map((fee) => ({
+      const feeItems: FeeItem[] = fees.map((fee: any) => ({
         id: fee.id,
         feeName: fee.feeName,
         feeType: fee.feeType,
@@ -211,11 +211,11 @@ class ParentFeesController {
       // Calculate summary
       const allFees = await prisma.studentFee.findMany({ where: { studentId } });
       const summary = {
-        totalFees: allFees.reduce((sum, f) => sum + Number(f.totalAmount), 0),
-        totalPaid: allFees.reduce((sum, f) => sum + Number(f.paidAmount), 0),
-        totalBalance: allFees.reduce((sum, f) => sum + Number(f.balance), 0),
-        pendingCount: allFees.filter((f) => f.status === "pending").length,
-        overdueCount: allFees.filter((f) => f.status === "overdue").length,
+        totalFees: allFees.reduce((sum: number, f: any) => sum + Number(f.totalAmount), 0),
+        totalPaid: allFees.reduce((sum: number, f: any) => sum + Number(f.paidAmount), 0),
+        totalBalance: allFees.reduce((sum: number, f: any) => sum + Number(f.balance), 0),
+        pendingCount: allFees.filter((f: any) => f.status === "pending").length,
+        overdueCount: allFees.filter((f: any) => f.status === "overdue").length,
       };
 
       res.json({
@@ -275,7 +275,7 @@ class ParentFeesController {
 
       res.json({
         success: true,
-        data: payments.map((p) => ({
+        data: payments.map((p: any) => ({
           ...p,
           amount: Number(p.amount),
         })),
@@ -323,7 +323,7 @@ class ParentFeesController {
 
       res.json({
         success: true,
-        data: receipts.map((r) => ({
+        data: receipts.map((r: any) => ({
           ...r,
           totalAmount: Number(r.totalAmount),
         })),

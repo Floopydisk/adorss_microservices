@@ -2,7 +2,7 @@ services:
   - type: web
     name: finance-service
     env: node
-    buildCommand: pnpm install --no-frozen-lockfile && pnpm build && pnpm exec prisma migrate deploy
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm exec prisma generate && pnpm build && pnpm exec prisma migrate deploy
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
