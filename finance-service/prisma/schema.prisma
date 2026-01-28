@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== FEE STRUCTURE ====================
+model FeeStructure {
+  id                String   @id @default(cuid())
+  schoolId          String   @db.VarChar(255)
+  name              String
+  description       String?
+  academicYear      String
+  term              String?
+  grade             String?
+  classId           String?  @db.VarChar(255)
+  feeType           String   @db.VarChar(50) // "tuition" | "registration" | "exam" | "transport" | "uniform" | "books" | "activity" | "meal" | "other"
+  amount            Decimal  @db.Numeric(10, 2)
+  currency          String   @default("NGN") @db.VarChar(3)
+  dueDate           DateTime?
+  isRecurring       Boolean  @default(false)
+  recurringPeriod   String?  @db.VarChar(50) // "monthly" | "quarterly" | "termly" | "annually"
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  studentFees       StudentFee[]
+
+  @@index([schoolId])
+  @@index([schoolId, academicYear, feeType])
+}
+
+// ==================== STUDENT FEE ====================
+model StudentFee {
+  id                String   @id @default(cuid())
+  studentId         String   @db.VarChar(255)
+  studentUserId     String   @db.VarChar(255)
+  schoolId          String   @db.VarChar(255)
+  feeStructureId    String
+  academicYear      String
+  term              String?
+  feeName           String
+  feeType           String   @db.VarChar(50)
+  amount            Decimal  @db.Numeric(10, 2)
+  discount          Decimal  @default(0) @db.Numeric(10, 2)
+  totalAmount       Decimal  @db.Numeric(10, 2)
+  paidAmount        Decimal  @default(0) @db.Numeric(10, 2)
+  balance           Decimal  @db.Numeric(10, 2)
+  currency          String   @default("NGN") @db.VarChar(3)
+  dueDate           DateTime?
+  status            String   @default("pending") @db.VarChar(50) // "pending" | "partial" | "paid" | "overdue" | "waived"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  feeStructure      FeeStructure @relation(fields: [feeStructureId], references: [id])
+  payments          Payment[]
+
+  @@index([studentId])
+  @@index([studentUserId])
+  @@index([schoolId])
+  @@index([academicYear])
+}
+
+// ==================== PAYMENT ====================
+model Payment {
+  id                String   @id @default(cuid())
+  studentFeeId      String
+  studentId         String   @db.VarChar(255)
+  parentId          String   @db.VarChar(255)
+  schoolId          String   @db.VarChar(255)
+  amount            Decimal  @db.Numeric(10, 2)
+  paymentMethod     String   @db.VarChar(50) // "paystack" | "flutterwave" | "bank_transfer" | "cash"
+  paymentReference  String?  @unique
+  paymentStatus     String   @default("pending") @db.VarChar(50) // "pending" | "processing" | "completed" | "failed"
+  transactionId     String?  @unique
+  receiptId         String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  studentFee        StudentFee @relation(fields: [studentFeeId], references: [id])
+  receipt           Receipt?   @relation(fields: [receiptId], references: [id])
+
+  @@index([studentId])
+  @@index([parentId])
+  @@index([schoolId])
+  @@index([paymentStatus])
+}
+
+// ==================== RECEIPT ====================
+model Receipt {
+  id                String   @id @default(cuid())
+  studentId         String   @db.VarChar(255)
+  parentId          String   @db.VarChar(255)
+  schoolId          String   @db.VarChar(255)
+  receiptNumber     String   @unique
+  totalAmount       Decimal  @db.Numeric(10, 2)
+  currency          String   @default("NGN") @db.VarChar(3)
+  paymentMethod     String   @db.VarChar(50)
+  receiptType       String   @db.VarChar(50) // "individual_payment" | "bulk_payment" | "refund"
+  generatedAt       DateTime @default(now())
+  issuedAt          DateTime?
+  downloadedAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  payments          Payment[]
+
+  @@index([studentId])
+  @@index([parentId])
+  @@index([schoolId])
+}

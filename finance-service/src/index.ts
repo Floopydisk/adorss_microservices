@@ -2,8 +2,8 @@ import express, { Application, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 // Import routes
 import parentRoutes from "./routes/parentRoutes";
@@ -14,6 +14,7 @@ import { authMiddleware } from "./middleware/authMiddleware";
 dotenv.config();
 
 const app: Application = express();
+const prisma = new PrismaClient();
 
 // Middleware
 app.use(helmet());
@@ -23,15 +24,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // Health check (no auth required)
-app.get("/health", (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    service: "finance-service",
-    status: "healthy",
-    database:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-    timestamp: new Date().toISOString(),
-  });
+app.get("/health", async (req: Request, res: Response) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      success: true,
+      service: "finance-service",
+      status: "healthy",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      service: "finance-service",
+      status: "unhealthy",
+      database: "disconnected",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Service info (no auth required)
@@ -77,40 +89,24 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Database connection
-const connectDB = async (): Promise<void> => {
-  const MONGODB_URI =
-    process.env.MONGODB_URI || "mongodb://localhost:27017/finance-service";
-
-  try {
-    await mongoose.connect(MONGODB_URI);
-    console.log("📦 MongoDB connected successfully");
-  } catch (error) {
-    console.error("❌ MongoDB connection error:", error);
-    process.exit(1);
-  }
-};
-
-// Mongoose event handlers
-mongoose.connection.on("disconnected", () => {
-  console.log("⚠️ MongoDB disconnected");
-});
-
-mongoose.connection.on("reconnected", () => {
-  console.log("🔄 MongoDB reconnected");
-});
-
 // Start server
 const PORT = process.env.PORT || 8004;
 
 const startServer = async (): Promise<void> => {
-  await connectDB();
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    console.log("🐘 PostgreSQL connected successfully");
 
-  app.listen(PORT, () => {
-    console.log("🚀 finance-service running on port", PORT);
-    console.log("📍 Health check: http://localhost:" + PORT + "/health");
-    console.log("💰 Parent API: http://localhost:" + PORT + "/api/parent");
-  });
+    app.listen(PORT, () => {
+      console.log("🚀 finance-service running on port", PORT);
+      console.log("📍 Health check: http://localhost:" + PORT + "/health");
+      console.log("💰 Parent API: http://localhost:" + PORT + "/api/parent");
+    });
+  } catch (error) {
+    console.error("❌ PostgreSQL connection error:", error);
+    process.exit(1);
+  }
 };
 
 startServer();
