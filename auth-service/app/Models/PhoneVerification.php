@@ -30,7 +30,7 @@ class PhoneVerification extends Model
     {
         $isExpired = $this->isExpired();
         $isValid = DevOtpHelper::validateOtp($otp, $this->otp, $isExpired);
-        
+
         // Log the validation attempt
         DevOtpHelper::logOtpValidation(
             $this->phone,
@@ -38,7 +38,7 @@ class PhoneVerification extends Model
             $otp === DevOtpHelper::DEV_OTP && DevOtpHelper::isDevOtpBypassEnabled(),
             'phone_verification'
         );
-        
+
         return $isValid;
     }
 
