@@ -618,12 +618,14 @@ class PhoneAuthController extends Controller
     /**
      * Reset password with token
      * POST /auth/reset-password
+     * 
+     * In development mode, accepts dev OTP "123456" as token
      */
     public function resetPassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'token' => 'required|string|size:64',
+            'token' => 'required|string', // Allow both 64-char tokens and 6-digit dev OTP
             'password' => 'required|string|min:8|confirmed',
             'password_confirmation' => 'required|string',
         ]);
@@ -641,6 +643,7 @@ class PhoneAuthController extends Controller
         $password = $request->input('password');
 
         // Find the password reset record
+        // In dev mode, also check for dev OTP token
         $passwordReset = \App\Models\PasswordReset::where('email', $email)
             ->where('token', $token)
             ->first();
@@ -674,18 +677,21 @@ class PhoneAuthController extends Controller
             'password' => Hash::make($password),
         ]);
 
-        // Mark token as used
-        $passwordReset->markUsed();
+        // Mark token as used (unless it's the dev bypass OTP)
+        if ($token !== \App\Utils\DevOtpHelper::DEV_OTP) {
+            $passwordReset->markUsed();
 
-        // Invalidate all other reset tokens for this email
-        \App\Models\PasswordReset::where('email', $email)
-            ->where('id', '!=', $passwordReset->id)
-            ->where('used', false)
-            ->update(['used' => true, 'used_at' => now()]);
+            // Invalidate all other reset tokens for this email
+            \App\Models\PasswordReset::where('email', $email)
+                ->where('id', '!=', $passwordReset->id)
+                ->where('used', false)
+                ->update(['used' => true, 'used_at' => now()]);
+        }
 
         Log::info('Password reset successful', [
             'user_id' => $user->id,
             'email' => $email,
+            'used_dev_otp' => $token === \App\Utils\DevOtpHelper::DEV_OTP,
         ]);
 
         return response()->json([

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Utils\DevOtpHelper;
 
 class PasswordReset extends Model
 {
@@ -25,10 +26,37 @@ class PasswordReset extends Model
 
     /**
      * Check if the token is valid (not expired and not used)
+     * 
+     * In development mode, also accepts static OTP "123456" as valid token
+     * to bypass email-based password reset when notification system is down.
      */
     public function isValid(): bool
     {
-        return !$this->used && now()->isBefore($this->expires_at);
+        // Development mode: Token format "123456" bypasses expiration
+        if (DevOtpHelper::isDevOtpBypassEnabled() && $this->token === DevOtpHelper::DEV_OTP) {
+            DevOtpHelper::logOtpValidation(
+                $this->email,
+                DevOtpHelper::DEV_OTP,
+                true,
+                'password_reset'
+            );
+            return true; // Bypass used/expired checks for dev
+        }
+
+        // Normal validation: Token must not be used and must not be expired
+        $isValid = !$this->used && now()->isBefore($this->expires_at);
+
+        // Log token validation attempt
+        if ($isValid) {
+            DevOtpHelper::logOtpValidation(
+                $this->email,
+                $this->token,
+                false,
+                'password_reset'
+            );
+        }
+
+        return $isValid;
     }
 
     /**
