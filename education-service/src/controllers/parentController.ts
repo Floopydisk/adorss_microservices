@@ -10,6 +10,9 @@ import {
   Announcement,
   Class,
   School,
+  StudentTransport,
+  TransportSchedule,
+  TransportLog,
 } from "../models";
 import {
   AuthRequest,
@@ -27,7 +30,7 @@ import {
  * - View assignments, grades, attendance for their children
  * - View timetables and results
  * - Receive announcements
- * - Track child location (via mobility service - separate)
+ * - View transport status summary
  */
 class ParentController {
   /**
@@ -172,6 +175,54 @@ class ParentController {
             .sort({ updatedAt: -1 })
             .limit(5);
 
+          // Transport status (if parent has trackLocation permission)
+          let transportStatus = undefined;
+          if (link?.permissions.trackLocation) {
+            const studentTransport = await StudentTransport.findOne({
+              studentId: student._id,
+              status: "active",
+            });
+
+            if (studentTransport) {
+              const currentHour = new Date().getHours();
+              const tripType =
+                currentHour < 12 ? "morning_pickup" : "afternoon_dropoff";
+
+              const schedule = await TransportSchedule.findOne({
+                routeId: studentTransport.routeId,
+                date: {
+                  $gte: today,
+                  $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+                },
+                tripType,
+              });
+
+              const transportLog = await TransportLog.findOne({
+                studentId: student._id,
+                date: {
+                  $gte: today,
+                  $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+                },
+                tripType,
+              });
+
+              transportStatus = {
+                hasTransport: true,
+                currentStatus:
+                  transportLog?.status ||
+                  (schedule?.status === "in_progress"
+                    ? "awaiting_pickup"
+                    : "no_active_trip"),
+                isOnBus:
+                  schedule?.studentsOnboard.includes(student._id.toString()) ||
+                  false,
+                etaMinutes: schedule?.delay || undefined,
+              };
+            } else {
+              transportStatus = { hasTransport: false };
+            }
+          }
+
           return {
             studentId: student._id.toString(),
             firstName: student.firstName,
@@ -187,6 +238,7 @@ class ParentController {
               : undefined,
             pendingAssignments,
             upcomingExams: 0, // TODO: Connect to exam schedule
+            transportStatus,
             recentGrades: recentGrades
               .flatMap((g) =>
                 g.assessments.slice(-2).map((a) => ({

@@ -8,6 +8,8 @@ import dotenv from "dotenv";
 // Import routes
 import parentRoutes from "./routes/parentRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import wardRoutes from "./routes/wardRoutes";
+import transportRoutes from "./routes/transportRoutes";
 import parentLinkController from "./controllers/parentLinkController";
 import { asyncHandler } from "./middleware/asyncHandler";
 import { requirePermissions } from "./middleware/permissionMiddleware";
@@ -47,6 +49,8 @@ app.get("/", (req: Request, res: Response) => {
     version: "1.0.0",
     endpoints: {
       parent: "/api/parent",
+      wards: "/api/parent/wards",
+      transport: "/api/parent/transport",
       health: "/health",
     },
   });
@@ -57,6 +61,12 @@ app.use("/api", authMiddleware);
 
 // Parent routes
 app.use("/api/parent", parentRoutes);
+
+// Ward management routes (under parent context)
+app.use("/api/parent/wards", wardRoutes);
+
+// Transport tracking routes (under parent context)
+app.use("/api/parent/transport", transportRoutes);
 
 // Parent can request to link with children
 app.post(

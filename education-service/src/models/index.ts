@@ -555,3 +555,27 @@ export const Announcement = mongoose.model<IAnnouncement>(
   "Announcement",
   AnnouncementSchema,
 );
+
+// Re-export transport models
+export {
+  TransportRoute,
+  StudentTransport,
+  TransportSchedule,
+  TransportLog,
+  Vehicle,
+  ITransportRoute,
+  IStudentTransport,
+  ITransportSchedule,
+  ITransportLog,
+  IVehicle,
+} from "./transportModels";
+
+// Re-export ward models
+export {
+  WardEnrollmentRequest,
+  WardSettings,
+  PickupAuthorization,
+  IWardEnrollmentRequest,
+  IWardSettings,
+  IPickupAuthorization,
+} from "./wardModels";
