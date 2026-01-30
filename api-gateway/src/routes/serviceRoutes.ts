@@ -476,32 +476,40 @@ export function createServiceRoutes(
 
   // ========== MOBILITY SERVICE ROUTES ==========
 
-  // Location tracking
-  router.get(
-    "/mobility/location",
-    authMiddleware.authenticate,
-    authMiddleware.authorize("location", "read"),
-    ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/location": "/location",
-    }),
-  );
-
-  router.post(
-    "/mobility/location",
-    authMiddleware.authenticate,
-    authMiddleware.authorize("location", "broadcast"),
-    ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/location": "/location",
-    }),
-  );
-
-  // Routes
+  // Routes - Transport routes management
   router.get(
     "/mobility/routes",
     authMiddleware.authenticate,
     authMiddleware.authorize("routes", "read"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/routes": "/routes",
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/routes/:routeId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("routes", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/routes/:routeId/tracking",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("routes", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/routes/:routeId/eta",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("routes", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
     }),
   );
 
@@ -510,35 +518,118 @@ export function createServiceRoutes(
     authMiddleware.authenticate,
     authMiddleware.authorize("routes", "manage"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/routes": "/routes",
+      "^/api/mobility": "/api/mobility",
     }),
   );
 
-  // Trips
-  router.post(
-    "/mobility/trips",
+  // Drivers - Driver management
+  router.get(
+    "/mobility/drivers",
     authMiddleware.authenticate,
-    authMiddleware.authorize("trips", "create"),
+    authMiddleware.authorize("drivers", "read"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/trips": "/trips",
+      "^/api/mobility": "/api/mobility",
     }),
   );
 
   router.get(
-    "/mobility/trips",
+    "/mobility/drivers/:driverId",
     authMiddleware.authenticate,
-    authMiddleware.authorize("trips", "read"),
+    authMiddleware.authorize("drivers", "read"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/trips": "/trips",
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.post(
+    "/mobility/drivers",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("drivers", "manage"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
     }),
   );
 
   router.patch(
-    "/mobility/trips/:id",
+    "/mobility/drivers/:driverId/status",
     authMiddleware.authenticate,
-    authMiddleware.authorize("trips", "update"),
+    authMiddleware.authorize("drivers", "manage"),
     ServiceRouter.createProxy(serviceUrls.mobility, {
-      "^/api/mobility/trips": "/trips",
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.patch(
+    "/mobility/drivers/:driverId/location",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("drivers", "manage"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  // Vehicles - Vehicle/fleet management
+  router.get(
+    "/mobility/vehicles",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("vehicles", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/vehicles/:vehicleId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("vehicles", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/vehicles/:vehicleId/tracking",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("vehicles", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.post(
+    "/mobility/vehicles",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("vehicles", "manage"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  // Rides - Ride requests (Uber-like functionality)
+  router.post(
+    "/mobility/rides",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("rides", "create"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.get(
+    "/mobility/rides/:rideId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("rides", "read"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
+    }),
+  );
+
+  router.patch(
+    "/mobility/rides/:rideId",
+    authMiddleware.authenticate,
+    authMiddleware.authorize("rides", "update"),
+    ServiceRouter.createProxy(serviceUrls.mobility, {
+      "^/api/mobility": "/api/mobility",
     }),
   );
 
