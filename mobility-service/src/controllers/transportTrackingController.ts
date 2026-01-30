@@ -181,7 +181,8 @@ class TransportTrackingController {
   async getPassengerHistory(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { studentId } = req.params;
-      const { startDate, endDate, tripType, page, limit } = req.query;
+      const { startDate, endDate, tripType } = req.query;
+      // page and limit are reserved for future pagination
 
       // Default to last 7 days if not specified
       const end = (endDate as string) || new Date().toISOString().split("T")[0];

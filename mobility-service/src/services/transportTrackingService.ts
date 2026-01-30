@@ -19,12 +19,9 @@ import {
 } from "../types";
 import {
   mockPassengers,
-  mockRoutes,
   mockTrips,
   mockTripTracking,
   mockPassengerTripLogs,
-  mockDrivers,
-  mockVehicles,
   getPassengerByStudentId,
   getRouteById,
   getDriverById,

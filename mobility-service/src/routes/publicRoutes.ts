@@ -9,10 +9,10 @@
  * Base path: /api/mobility
  */
 
-import { Router } from "express";
+import { Router, IRouter } from "express";
 import transportTrackingController from "../controllers/transportTrackingController";
 
-const router = Router();
+const router: IRouter = Router();
 
 // ==========================================
 // Route Management
