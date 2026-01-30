@@ -13,6 +13,7 @@ https://api.adorss.ng
 ```
 
 All requests go through the API Gateway, which routes to:
+
 - **Auth Service:** Internal (cPanel)
 - **Education Service:** https://edu.adorss.ng
 - **Finance Service:** https://finance-service-5t22.onrender.com
@@ -31,13 +32,19 @@ curl -X POST https://api.adorss.ng/auth/register \
     "email": "testparent@adorss.ng",
     "phone": "+2348012345678",
     "password": "SecurePassword123!",
-    "role": "parent",
-    "organization_id": 1,
-    "organization_type": "school"
+    "role": "parent"
   }'
 ```
 
+**Optional Parameters:**
+
+- `organization_id` - School ID (if parent is pre-registering for a specific school)
+- `organization_type` - Default: "school" (other options: "fleet", "independent")
+
+**Note:** Organization linking typically happens through the Education Service when children are enrolled, not during initial registration.
+
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -63,6 +70,7 @@ curl -X POST https://api.adorss.ng/auth/login \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -80,30 +88,94 @@ curl -X POST https://api.adorss.ng/auth/login \
 
 **⚠️ Save the token - you'll need it for all other requests**
 
-### 1.3 Login with Phone OTP
+### 1.3 Register with Phone OTP
 
 ```bash
 # Step 1: Request OTP
-curl -X POST https://api.adorss.ng/auth/send-otp \
+curl -X POST https://api.adorss.ng/auth/phone/request-otp \
   -H "Content-Type: application/json" \
   -d '{
-    "phone": "+2348012345678"
+    "phone": "+2348012345678",
+    "role": "parent"
   }'
 
 # Expected Response:
 # {
 #   "success": true,
-#   "message": "OTP sent to phone"
+#   "message": "OTP sent to your phone. It will expire in 10 minutes.",
+#   "expires_in_minutes": 10
 # }
 
-# Step 2: Verify OTP (you'll receive this via SMS in real scenario)
-curl -X POST https://api.adorss.ng/auth/verify-otp \
+# Step 2: Verify OTP
+# 🚀 DEVELOPMENT MODE: Use static OTP "123456" (no SMS needed)
+curl -X POST https://api.adorss.ng/auth/phone/verify-otp \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "+2348012345678",
     "otp": "123456",
     "role": "parent"
   }'
+
+# Expected Response:
+# {
+#   "success": true,
+#   "message": "OTP verified",
+#   "registration_token": "abc123..."
+# }
+
+# Step 3: Complete Registration with email and password
+curl -X POST https://api.adorss.ng/auth/phone/complete-registration \
+  -H "Content-Type: application/json" \
+  -d '{
+    "registration_token": "abc123...",
+    "email": "testparent@adorss.ng",
+    "name": "Test Parent",
+    "password": "SecurePassword123!",
+    "password_confirmation": "SecurePassword123!"
+  }'
+```
+
+### 1.4 Login with Phone OTP
+
+```bash
+# Step 1: Request Login OTP
+curl -X POST https://api.adorss.ng/auth/phone/request-login-otp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+2348012345678",
+    "role": "parent"
+  }'
+
+# Expected Response:
+# {
+#   "success": true,
+#   "message": "OTP sent to your phone. It will expire in 10 minutes.",
+#   "expires_in_minutes": 10
+# }
+
+# Step 2: Login with OTP
+# 🚀 DEVELOPMENT MODE: Use static OTP "123456" (no SMS needed)
+curl -X POST https://api.adorss.ng/auth/phone/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+2348012345678",
+    "otp": "123456",
+    "role": "parent"
+  }'
+
+# Expected Response:
+# {
+#   "success": true,
+#   "message": "Login successful",
+#   "user": {
+#     "id": "user-uuid",
+#     "name": "Test Parent",
+#     "email": "testparent@adorss.ng",
+#     "role": "parent"
+#   },
+#   "token": "eyJhbGciOiJIUzI1NiIs...",
+#   "expires_in": 3600
+# }
 ```
 
 ---
@@ -121,6 +193,7 @@ curl -X GET https://api.adorss.ng/api/education/parent/children \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -157,6 +230,7 @@ curl -X GET https://api.adorss.ng/api/education/parent/dashboard \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -199,6 +273,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/children/{STUDENT_ID}/as
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -237,6 +312,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/children/{STUDENT_ID}/gr
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -283,6 +359,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/children/{STUDENT_ID}/at
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -317,6 +394,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/children/{STUDENT_ID}/ti
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -352,6 +430,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/children/{STUDENT_ID}/re
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -387,6 +466,7 @@ curl -X GET "https://api.adorss.ng/api/education/parent/announcements?page=1&lim
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -426,6 +506,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/fees" \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -462,6 +543,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/fees/{STUDENT_ID}?page=1&l
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -527,6 +609,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/payments?page=1&limit=20" 
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -562,6 +645,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts?page=1&limit=20" 
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -597,6 +681,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts/{RECEIPT_ID}" \
 ```
 
 **Expected Response:**
+
 ```json
 {
   "success": true,
@@ -622,12 +707,16 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts/{RECEIPT_ID}" \
 ## TESTING CHECKLIST
 
 ### Auth Service
-- [ ] Register parent user
+
+- [ ] Register parent user (email/password)
 - [ ] Login with email/password
-- [ ] Login with phone OTP
-- [ ] Verify token is returned
+- [ ] Register with phone OTP (use static OTP "123456")
+- [ ] Login with phone OTP (use static OTP "123456")
+- [ ] Verify token is returned and valid
+- [ ] Test token in subsequent requests
 
 ### Education Service
+
 - [ ] Get all children (multiple schools)
 - [ ] View parent dashboard
 - [ ] Get child's assignments
@@ -638,6 +727,7 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts/{RECEIPT_ID}" \
 - [ ] Get school announcements
 
 ### Finance Service
+
 - [ ] Get all fees grouped by school
 - [ ] Get specific child's fees
 - [ ] Get payment history
@@ -649,18 +739,22 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts/{RECEIPT_ID}" \
 ## TROUBLESHOOTING
 
 ### 401 Unauthorized
+
 - **Issue:** Token is invalid or expired
 - **Fix:** Re-login and get a new token
 
 ### 403 Forbidden
+
 - **Issue:** Missing required permissions
 - **Fix:** Verify parent has permission to view this student
 
 ### 404 Not Found
+
 - **Issue:** Resource doesn't exist
 - **Fix:** Verify the studentId/receiptId is correct
 
 ### 500 Server Error
+
 - **Issue:** Service is down or database error
 - **Fix:** Check service status in Render/cPanel dashboard
 
@@ -675,3 +769,20 @@ curl -X GET "https://api.adorss.ng/api/finance/parent/receipts/{RECEIPT_ID}" \
 - Currency is NGN (Nigerian Naira)
 - Page numbers are 1-indexed
 
+---
+
+## DEVELOPMENT MODE - OTP BYPASS
+
+**🚀 Static OTP for Testing:** `123456`
+
+In development environments, all phone OTP endpoints accept the static OTP `123456` to bypass AWS SNS configuration. This allows full testing of:
+
+- ✅ Phone registration flows
+- ✅ Phone login flows
+- ✅ Password reset flows (future)
+
+**No SMS will be sent in development mode** - the system logs OTP requests instead. Simply use `123456` for all OTP verifications.
+
+This bypass is **automatically disabled in production** (`APP_ENV=production`).
+
+For complete documentation, see: [DEV_OTP_BYPASS_GUIDE.md](auth-service/DEV_OTP_BYPASS_GUIDE.md)
