@@ -7,6 +7,7 @@ use App\Models\PhoneVerification;
 use App\Models\EmailVerification;
 use App\Services\SMSService;
 use App\Jobs\SendEmailVerification;
+use App\Utils\DevOtpHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -112,23 +113,53 @@ class PhoneAuthController extends Controller
             ], 422);
         }
 
-        $phoneVerification = PhoneVerification::where('phone', $request->input('phone'))->first();
+        $phone = $request->input('phone');
+        $otp = $request->input('otp');
 
-        if (!$phoneVerification) {
-            return response()->json([
-                'success' => false,
-                'message' => 'OTP not found or expired. Request a new one.',
-            ], 404);
+        // Development bypass: Allow static OTP without DB record
+        if (DevOtpHelper::isDevOtpBypassEnabled() && $otp === DevOtpHelper::DEV_OTP) {
+            Log::info('🔓 [DEV MODE] OTP verification bypassed with static OTP', [
+                'phone' => substr($phone, -4),
+                'otp' => 'DEV_STATIC',
+            ]);
+
+            // Try to create verification record, but don't fail if DB is unavailable
+            try {
+                PhoneVerification::updateOrCreate(
+                    ['phone' => $phone],
+                    [
+                        'otp' => DevOtpHelper::DEV_OTP,
+                        'expires_at' => now()->addMinutes(10),
+                        'verified' => true,
+                        'verified_at' => now(),
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('🔓 [DEV MODE] Could not save verification record (DB offline?)', [
+                    'phone' => substr($phone, -4),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } else {
+            // Normal flow: Check DB record
+            $phoneVerification = PhoneVerification::where('phone', $phone)->first();
+
+            if (!$phoneVerification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OTP not found or expired. Request a new one.',
+                ], 404);
+            }
+
+            if (!$phoneVerification->isValid($otp)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired OTP',
+                ], 401);
+            }
+
+            $phoneVerification->markVerified();
         }
-
-        if (!$phoneVerification->isValid($request->input('otp'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired OTP',
-            ], 401);
-        }
-
-        $phoneVerification->markVerified();
 
         $tempToken = Str::random(64);
         cache()->put('phone_auth:' . $tempToken, [
@@ -335,17 +366,53 @@ class PhoneAuthController extends Controller
             ], 422);
         }
 
-        $phoneVerification = PhoneVerification::where('phone', $request->input('phone'))->first();
+        $phone = $request->input('phone');
+        $otp = $request->input('otp');
+        $role = $request->input('role');
 
-        if (!$phoneVerification || !$phoneVerification->isValid($request->input('otp'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid or expired OTP',
-            ], 401);
+        // Development bypass: Allow static OTP without DB record
+        $devBypassUsed = false;
+        if (DevOtpHelper::isDevOtpBypassEnabled() && $otp === DevOtpHelper::DEV_OTP) {
+            Log::info('🔓 [DEV MODE] Login OTP verification bypassed with static OTP', [
+                'phone' => substr($phone, -4),
+                'otp' => 'DEV_STATIC',
+            ]);
+
+            $devBypassUsed = true;
+
+            // Try to create verification record, but don't fail if DB is unavailable
+            try {
+                PhoneVerification::updateOrCreate(
+                    ['phone' => $phone],
+                    [
+                        'otp' => DevOtpHelper::DEV_OTP,
+                        'expires_at' => now()->addMinutes(10),
+                        'verified' => true,
+                        'verified_at' => now(),
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('🔓 [DEV MODE] Could not save verification record (DB offline?)', [
+                    'phone' => substr($phone, -4),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } else {
+            // Normal flow: Check DB record
+            $phoneVerification = PhoneVerification::where('phone', $phone)->first();
+
+            if (!$phoneVerification || !$phoneVerification->isValid($otp)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired OTP',
+                ], 401);
+            }
+
+            $phoneVerification->markVerified();
         }
 
-        $user = User::where('phone', $request->input('phone'))
-            ->where('role', $request->input('role'))
+        $user = User::where('phone', $phone)
+            ->where('role', $role)
             ->first();
 
         if (!$user) {
@@ -378,7 +445,7 @@ class PhoneAuthController extends Controller
             ], 403);
         }
 
-        $phoneVerification->markVerified();
+        // Note: phoneVerification->markVerified() is handled above in both dev and normal flows
         $user->update(['last_login_at' => now()]);
 
         try {
