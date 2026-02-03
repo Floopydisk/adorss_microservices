@@ -36,13 +36,8 @@ class SMSService
      */
     public function sendOTP(string $phone, string $otp): bool
     {
-        // Check rate limiting (max 3 requests per phone per hour)
-        if (!$this->checkRateLimit($phone)) {
-            Log::warning("OTP rate limit exceeded for phone: {$phone}");
-            return false;
-        }
-
         // Development mode: Log OTP instead of sending via AWS SNS
+        // Skip rate limiting in dev mode to allow easier testing
         if (DevOtpHelper::isDevOtpBypassEnabled()) {
             Log::notice('📲 [DEV MODE] OTP Request - Use static OTP "123456" to bypass', [
                 'phone' => $this->maskPhone($phone),
@@ -50,12 +45,17 @@ class SMSService
                 'dev_static_otp' => DevOtpHelper::DEV_OTP,
                 'aws_sns_status' => 'BYPASSED - Using static OTP',
                 'message' => DevOtpHelper::getDevModeMessage(),
+                'rate_limit_bypassed' => true,
             ]);
 
-            // Increment rate limit counter even in dev mode
-            $this->incrementRateLimit($phone);
-
+            // No rate limiting in dev mode for easier testing
             return true; // Consider it successful since we logged it
+        }
+
+        // Production mode: Check rate limiting (max 3 requests per phone per hour)
+        if (!$this->checkRateLimit($phone)) {
+            Log::warning("OTP rate limit exceeded for phone: {$phone}");
+            return false;
         }
 
         // Production mode: Send via AWS SNS

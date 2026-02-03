@@ -17,22 +17,8 @@ class RateLimitAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // OTP Request Rate Limiting
-        if ($request->routeIs('auth.phone.request-otp')) {
-            $phone = $request->input('phone');
-            $cacheKey = "rate_limit:otp:{$phone}";
-            $limit = 3;
-            $window = 3600; // 1 hour
-
-            if ($this->isRateLimited($cacheKey, $limit, $window)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Too many OTP requests. Please try again later.',
-                ], 429);
-            }
-
-            $this->incrementCounter($cacheKey, $window);
-        }
+        // Note: OTP request rate limiting is handled in SMSService
+        // to avoid double-counting and allow dev bypass
 
         // Login Attempt Rate Limiting
         if ($request->routeIs('auth.login') || $request->routeIs('auth.phone.login')) {

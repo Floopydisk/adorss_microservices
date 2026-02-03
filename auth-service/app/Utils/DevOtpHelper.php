@@ -47,17 +47,18 @@ class DevOtpHelper
      */
     public static function validateOtp(string $submittedOtp, ?string $expectedOtp, bool $isExpired = false): bool
     {
+        // Development: Check for static OTP bypass FIRST (before production check)
+        // This ensures the bypass works even if production mode is accidentally set
+        if (self::isDevOtpBypassEnabled() && $submittedOtp === self::DEV_OTP) {
+            return true; // Valid - bypass all checks including expiration
+        }
+
         // Production: No bypass, strict validation
         if (!self::isDevOtpBypassEnabled()) {
             return !$isExpired && $submittedOtp === $expectedOtp;
         }
 
-        // Development: Allow static OTP bypass
-        if ($submittedOtp === self::DEV_OTP) {
-            return true; // Valid - bypass expiration check
-        }
-
-        // Also validate against the actual OTP if it exists
+        // Development: Also validate against the actual OTP if it exists
         return !$isExpired && $submittedOtp === $expectedOtp;
     }
 
