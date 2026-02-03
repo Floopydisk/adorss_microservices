@@ -24,12 +24,23 @@ class DevOtpHelper
     const DEV_OTP = '123456';
 
     /**
-     * Check if we're in development mode with OTP bypass enabled
+     * Check if OTP bypass is enabled
+     * 
+     * Bypass is enabled when:
+     * 1. APP_ENV is development/local/testing, OR
+     * 2. OTP_BYPASS_ENABLED env variable is explicitly set to true
+     *    (for production use before SNS is configured)
      * 
      * @return bool
      */
     public static function isDevOtpBypassEnabled(): bool
     {
+        // Check explicit bypass flag first (works in any environment)
+        if (filter_var(env('OTP_BYPASS_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
+            return true;
+        }
+        
+        // Fallback to environment check
         return in_array(config('app.env'), ['development', 'local', 'testing']);
     }
 

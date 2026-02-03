@@ -1,7 +1,23 @@
 # OTP Issues - Fixes Applied
 
 **Date:** February 3, 2026  
-**Status:** ✅ FIXED
+**Status:** ✅ FIXED (Updated with production bypass support - Round 4)
+
+---
+
+## Quick Setup for Deployment
+
+**To enable OTP bypass on ANY environment (including production):**
+
+Add this environment variable to your deployment:
+
+```env
+OTP_BYPASS_ENABLED=true
+```
+
+This allows the static OTP `123456` to work even when `APP_ENV=production`.
+
+**⚠️ IMPORTANT:** Set `OTP_BYPASS_ENABLED=false` once AWS SNS is configured!
 
 ---
 
@@ -9,6 +25,7 @@
 
 1. **"Too many requests" error** when requesting OTP
 2. **"Invalid or expired OTP" error** when verifying with bypass OTP `123456`
+3. **"OTP not found or expired"** error even with static OTP (NEW - Feb 3)
 
 ---
 
@@ -125,6 +142,53 @@ public function sendOTP($phone, $otp) {
 
 ---
 
+### ✅ Fix 4: Controller-Level Dev Bypass (NEW - Feb 3)
+
+**Files:**
+
+- `auth-service/app/Http/Controllers/PhoneAuthController.php`
+
+**Change:** Added dev bypass check BEFORE database lookup in both `verifyOtp()` and `loginWithPhone()` methods.
+
+**Problem:** Even with the helper fixes, the controller was checking for DB records first, causing "OTP not found" errors.
+
+**Solution:**
+
+```php
+public function verifyOtp(Request $request) {
+    $phone = $request->input('phone');
+    $otp = $request->input('otp');
+
+    // ✅ Check dev bypass FIRST (before DB lookup)
+    if (DevOtpHelper::isDevOtpBypassEnabled() && $otp === DevOtpHelper::DEV_OTP) {
+        Log::info('🔓 [DEV MODE] OTP verification bypassed with static OTP');
+
+        // Create record for consistency
+        PhoneVerification::updateOrCreate(
+            ['phone' => $phone],
+            ['otp' => DevOtpHelper::DEV_OTP, 'verified' => true, ...]
+        );
+    } else {
+        // Normal flow: check DB record
+        $phoneVerification = PhoneVerification::where('phone', $phone)->first();
+        if (!$phoneVerification) {
+            return error('OTP not found'); // ❌ Only for non-dev
+        }
+        // ... validate OTP
+    }
+
+    // Continue with registration token generation...
+}
+```
+
+**Benefit:**
+
+- Static OTP `123456` works even if `request-otp` wasn't called
+- No dependency on SMS service or DB state in dev mode
+- Frontend can test verification flow independently
+
+---
+
 ## Testing the Fix
 
 ### Manual Test Steps
@@ -157,10 +221,78 @@ public function sendOTP($phone, $otp) {
     **Expected:** Success, returns `registration_token`
 
 3. **Run automated test:**
+
     ```bash
     cd auth-service
-    bash test_phone_auth.sh
+    bash test_otp_bypass.sh
     ```
+
+4. **Test direct verification (without request-otp):**
+
+    ```bash
+    # This should work in dev mode with the new fix
+    curl -X POST http://localhost:8000/auth/phone/verify-otp \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phone": "+2349999999999",
+        "otp": "123456",
+        "role": "parent"
+      }'
+    ```
+
+    **Expected:** Success even without calling request-otp first
+
+---
+
+## Fix #5: Database-Optional Dev Bypass
+
+**Issue:** Even with dev bypass logic, the code was trying to save to the database which failed when MySQL wasn't running.
+
+**Root Cause:** In both `verifyOtp()` and `loginWithPhone()` methods, we were calling `PhoneVerification::updateOrCreate()` inside the dev bypass block. If the database is offline or not configured, this would throw an exception before returning success.
+
+**Fix Applied:** Wrapped the `PhoneVerification::updateOrCreate()` call in a try-catch block that logs a warning but doesn't fail the request.
+
+**Code Changes in `PhoneAuthController.php`:**
+
+```php
+// Before (would fail if DB offline)
+if (DevOtpHelper::isDevOtpBypassEnabled() && $otp === DevOtpHelper::DEV_OTP) {
+    // ...
+    PhoneVerification::updateOrCreate(...);  // Throws exception if DB offline
+}
+
+// After (gracefully handles DB offline)
+if (DevOtpHelper::isDevOtpBypassEnabled() && $otp === DevOtpHelper::DEV_OTP) {
+    // ...
+    try {
+        PhoneVerification::updateOrCreate(...);
+    } catch (\Exception $e) {
+        Log::warning('🔓 [DEV MODE] Could not save verification record (DB offline?)', [
+            'phone' => substr($phone, -4),
+            'error' => $e->getMessage(),
+        ]);
+        // Continue anyway - dev bypass doesn't require DB
+    }
+}
+```
+
+**Impact:** Frontend can now test OTP flow even when:
+
+- Database is not running
+- Database credentials are not configured
+- In pure frontend testing mode without backend infrastructure
+
+**Test Results:**
+
+```bash
+$ curl -X POST http://127.0.0.1:8000/auth/phone/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+1234567890","otp":"123456","role":"parent"}'
+
+{"success":true,"message":"OTP verified","registration_token":"xA2df..."}
+```
+
+✅ Works even with MySQL offline!
 
 ---
 
@@ -171,6 +303,12 @@ For the fixes to work, ensure `.env` has:
 ```env
 APP_ENV=local              # or 'development' or 'testing'
 # NOT 'production'
+
+# Database config optional for dev bypass
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1          # Can be offline in dev mode
+DB_PORT=3306
+DB_DATABASE=adorss_local
 ```
 
 **Dev bypass is enabled when:** `APP_ENV` is `local`, `development`, or `testing`
@@ -195,8 +333,10 @@ In production (`APP_ENV=production`):
 | Too many requests on OTP endpoint | ✅ FIXED | Removed duplicate rate limiting |
 | Invalid OTP error with "123456"   | ✅ FIXED | Reordered validation logic      |
 | Rate limiting in dev mode         | ✅ FIXED | Disabled rate limits in dev     |
+| OTP not found or expired          | ✅ FIXED | Controller-level dev bypass     |
+| Database connection errors        | ✅ FIXED | Made DB optional in dev bypass  |
 
-**All OTP authentication flows should now work correctly for frontend testing.**
+**All OTP authentication flows now work correctly for frontend testing, even without database.**
 
 ---
 
@@ -205,5 +345,6 @@ In production (`APP_ENV=production`):
 1. ✅ Test the OTP flow end-to-end
 2. ✅ Verify multiple requests don't trigger rate limiting
 3. ✅ Confirm static OTP `123456` works consistently
-4. 🔜 Configure AWS SNS for production (when ready)
-5. 🔜 Remove dev bypass when SMS infrastructure is live
+4. ✅ Works with database offline
+5. 🔜 Configure AWS SNS for production (when ready)
+6. 🔜 Remove dev bypass when SMS infrastructure is live
