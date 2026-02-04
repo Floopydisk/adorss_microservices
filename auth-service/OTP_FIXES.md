@@ -7,17 +7,53 @@
 
 ## Quick Setup for Deployment
 
-**To enable OTP bypass on ANY environment (including production):**
+**Option 1: Simple Approach (Recommended for now)**
 
-Add this environment variable to your deployment:
+Set `APP_ENV=development` on your deployment platform:
 
 ```env
+APP_ENV=development
+```
+
+This automatically enables OTP bypass. Both request-otp and verify-otp will work with static OTP `123456`.
+
+**Option 2: Production with Explicit Bypass**
+
+If you need `APP_ENV=production` for other reasons, use the environment variable:
+
+```env
+APP_ENV=production
 OTP_BYPASS_ENABLED=true
 ```
 
-This allows the static OTP `123456` to work even when `APP_ENV=production`.
+⚠️ **IMPORTANT:** Once AWS SNS is configured, remove the bypass:
+- Set `APP_ENV=production` (remove development)
+- Set `OTP_BYPASS_ENABLED=false` or remove it entirely
+- Real OTP codes will be sent via SMS
 
-**⚠️ IMPORTANT:** Set `OTP_BYPASS_ENABLED=false` once AWS SNS is configured!
+---
+
+## Verification
+
+✅ **Tested on https://api.adorss.ng:**
+
+```bash
+# Request OTP
+curl -X POST https://api.adorss.ng/auth/phone/request-otp \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+2349876543210","role":"parent"}'
+
+# Expected: {"success":true,"message":"OTP sent to your phone..."}
+
+# Verify with static OTP
+curl -X POST https://api.adorss.ng/auth/phone/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"+2349876543210","otp":"123456","role":"parent"}'
+
+# Expected: {"success":true,"message":"OTP verified","registration_token":"..."}
+```
+
+Both endpoints now return success ✅
 
 ---
 
