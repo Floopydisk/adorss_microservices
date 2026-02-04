@@ -1,5 +1,7 @@
 # Protected Endpoints Testing Report
+
 ## Production Deployment: https://api.adorss.ng
+
 **Date:** February 4, 2026
 
 ---
@@ -20,11 +22,11 @@
 
 ### Phase 1: User Registration ✅
 
-| Step | Endpoint | Status | Result |
-|------|----------|--------|--------|
-| 1 | `/auth/phone/request-otp` | ✅ PASS | OTP created via bypass |
-| 2 | `/auth/phone/verify-otp` | ✅ PASS | OTP verified, registration token issued |
-| 3 | `/auth/phone/complete-registration` | ✅ PASS | User created, JWT token generated |
+| Step | Endpoint                            | Status  | Result                                  |
+| ---- | ----------------------------------- | ------- | --------------------------------------- |
+| 1    | `/auth/phone/request-otp`           | ✅ PASS | OTP created via bypass                  |
+| 2    | `/auth/phone/verify-otp`            | ✅ PASS | OTP verified, registration token issued |
+| 3    | `/auth/phone/complete-registration` | ✅ PASS | User created, JWT token generated       |
 
 **Duration:** ~2 seconds  
 **Token Validity:** 1 hour (3600 seconds)
@@ -35,35 +37,35 @@
 
 #### Education Service
 
-| Endpoint | Method | Status | Response |
-|----------|--------|--------|----------|
-| `/api/education/parent/dashboard` | GET | ✅ RESPONDING | `Forbidden: missing permission education:read` |
-| `/api/education/parent/children` | GET | ✅ RESPONDING | `Forbidden: missing permission education:read` |
-| `/api/education/parent/wards` | GET | ✅ RESPONDING | `Endpoint not found` |
-| `/api/education/assignments` | GET | ✅ RESPONDING | `Endpoint not found` |
-| `/api/education/grades` | GET | ✅ RESPONDING | `Endpoint not found` |
-| `/api/education/attendance` | GET | ✅ RESPONDING | `Endpoint not found` |
+| Endpoint                          | Method | Status        | Response                                       |
+| --------------------------------- | ------ | ------------- | ---------------------------------------------- |
+| `/api/education/parent/dashboard` | GET    | ✅ RESPONDING | `Forbidden: missing permission education:read` |
+| `/api/education/parent/children`  | GET    | ✅ RESPONDING | `Forbidden: missing permission education:read` |
+| `/api/education/parent/wards`     | GET    | ✅ RESPONDING | `Endpoint not found`                           |
+| `/api/education/assignments`      | GET    | ✅ RESPONDING | `Endpoint not found`                           |
+| `/api/education/grades`           | GET    | ✅ RESPONDING | `Endpoint not found`                           |
+| `/api/education/attendance`       | GET    | ✅ RESPONDING | `Endpoint not found`                           |
 
 **Conclusion:** Implemented endpoints are responding with proper permission checks. Some endpoints not yet implemented.
 
 #### Mobility Service
 
-| Endpoint | Method | Status | Response |
-|----------|--------|--------|----------|
-| `/api/mobility/routes` | GET | ✅ RESPONDING | `Forbidden: missing permission routes:read` |
-| `/api/mobility/drivers` | GET | ✅ RESPONDING | `Forbidden: missing permission drivers:read` |
-| `/api/mobility/vehicles` | GET | ✅ RESPONDING | `Forbidden: missing permission vehicles:read` |
-| `/api/mobility/trips` | GET | ✅ RESPONDING | `Endpoint not found` |
-| `/api/mobility/tracking` | GET | ✅ RESPONDING | `Endpoint not found` |
+| Endpoint                 | Method | Status        | Response                                      |
+| ------------------------ | ------ | ------------- | --------------------------------------------- |
+| `/api/mobility/routes`   | GET    | ✅ RESPONDING | `Forbidden: missing permission routes:read`   |
+| `/api/mobility/drivers`  | GET    | ✅ RESPONDING | `Forbidden: missing permission drivers:read`  |
+| `/api/mobility/vehicles` | GET    | ✅ RESPONDING | `Forbidden: missing permission vehicles:read` |
+| `/api/mobility/trips`    | GET    | ✅ RESPONDING | `Endpoint not found`                          |
+| `/api/mobility/tracking` | GET    | ✅ RESPONDING | `Endpoint not found`                          |
 
 **Conclusion:** Core endpoints are responding. Permission system working correctly.
 
 #### Messaging Service
 
-| Endpoint | Method | Status | Response |
-|----------|--------|--------|----------|
-| `/api/messaging/messages` | GET | ⚠️ LIMITED | `Service unavailable` |
-| `/api/messaging/notifications` | GET | ⚠️ LIMITED | `Service unavailable` |
+| Endpoint                       | Method | Status     | Response              |
+| ------------------------------ | ------ | ---------- | --------------------- |
+| `/api/messaging/messages`      | GET    | ⚠️ LIMITED | `Service unavailable` |
+| `/api/messaging/notifications` | GET    | ⚠️ LIMITED | `Service unavailable` |
 
 **Conclusion:** Service may need additional configuration or dependencies.
 
@@ -118,6 +120,7 @@
 ## Frontend Testing Instructions
 
 ### 1. Quick Test
+
 ```bash
 # Request OTP
 curl -X POST "https://api.adorss.ng/auth/phone/request-otp" \
@@ -142,6 +145,7 @@ curl -X POST "https://api.adorss.ng/auth/phone/complete-registration" \
 ```
 
 ### 2. Test Protected Endpoints
+
 ```bash
 # Use the token from registration response
 curl "https://api.adorss.ng/api/education/parent/dashboard" \
@@ -154,6 +158,7 @@ curl "https://api.adorss.ng/api/mobility/routes" \
 ### 3. Expected Responses
 
 **Valid Token, Missing Permission:**
+
 ```json
 {
   "success": false,
@@ -162,6 +167,7 @@ curl "https://api.adorss.ng/api/mobility/routes" \
 ```
 
 **Valid Token, Endpoint Not Found:**
+
 ```json
 {
   "success": false,
@@ -171,6 +177,7 @@ curl "https://api.adorss.ng/api/mobility/routes" \
 ```
 
 **Invalid/Missing Token:**
+
 ```json
 {
   "success": false,
@@ -182,15 +189,15 @@ curl "https://api.adorss.ng/api/mobility/routes" \
 
 ## Deployment Status
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| API Gateway | ✅ Live | Healthy and routing correctly |
-| Auth Service | ✅ Live | OTP bypass enabled, users registering |
-| Education Service | ✅ Live | Responding, permission checks working |
-| Mobility Service | ✅ Live | Responding, permission checks working |
-| Messaging Service | ⚠️ Limited | Available but some endpoints need config |
-| Finance Service | ✅ Ready | Endpoints routed, not heavily tested |
-| Database | ✅ Connected | User registration persisting |
+| Component         | Status       | Notes                                    |
+| ----------------- | ------------ | ---------------------------------------- |
+| API Gateway       | ✅ Live      | Healthy and routing correctly            |
+| Auth Service      | ✅ Live      | OTP bypass enabled, users registering    |
+| Education Service | ✅ Live      | Responding, permission checks working    |
+| Mobility Service  | ✅ Live      | Responding, permission checks working    |
+| Messaging Service | ⚠️ Limited   | Available but some endpoints need config |
+| Finance Service   | ✅ Ready     | Endpoints routed, not heavily tested     |
+| Database          | ✅ Connected | User registration persisting             |
 
 ---
 

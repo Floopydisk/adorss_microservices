@@ -27,6 +27,7 @@ OTP_BYPASS_ENABLED=true
 ```
 
 ⚠️ **IMPORTANT:** Once AWS SNS is configured, remove the bypass:
+
 - Set `APP_ENV=production` (remove development)
 - Set `OTP_BYPASS_ENABLED=false` or remove it entirely
 - Real OTP codes will be sent via SMS
