@@ -40,6 +40,23 @@ class AuthServiceClient {
     }
   }
 
+  async checkEmail(email: string) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/auth/check-email`,
+        {
+          email,
+        },
+        {
+          timeout: 5000,
+        },
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error.response?.data || { message: error.message };
+    }
+  }
+
   async requestPhoneOtp(phone: string, role: string) {
     try {
       const response = await axios.post(

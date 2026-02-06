@@ -27,6 +27,16 @@ export function createAuthRoutes(authServiceClient: AuthServiceClient): Router {
     }
   });
 
+  // Check if email exists
+  router.post("/check-email", async (req: Request, res: Response) => {
+    try {
+      const result = await authServiceClient.checkEmail(req.body.email);
+      res.json(result);
+    } catch (error: any) {
+      res.status(400).json(error);
+    }
+  });
+
   // Phone auth routes
   router.post("/phone/request-otp", async (req: Request, res: Response) => {
     try {
