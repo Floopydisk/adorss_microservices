@@ -9,6 +9,7 @@ Route::prefix('auth')->middleware('rate_limit_auth')->group(function () {
     // Legacy email/password registration and login
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('check-email', [AuthController::class, 'checkEmail']);
 
     // Phone-based registration flow
     Route::prefix('phone')->group(function () {

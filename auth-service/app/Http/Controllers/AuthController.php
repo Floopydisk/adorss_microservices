@@ -162,7 +162,36 @@ class AuthController extends Controller
             'success' => true,
             'user' => $user,
             'token' => $token,
+            'access_token' => $token,
             'expires_in' => $this->tokenTtlSeconds(),
+        ]);
+    }
+
+    /**
+     * Check if an email already exists
+     * POST /auth/check-email
+     */
+    public function checkEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $email = $validator->validated()['email'];
+        $exists = User::where('email', $email)->exists();
+
+        return response()->json([
+            'success' => true,
+            'email' => $email,
+            'exists' => $exists,
         ]);
     }
 
