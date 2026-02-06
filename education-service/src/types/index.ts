@@ -76,6 +76,7 @@ export interface ChildSummary {
 
 export interface ParentDashboard {
   children: ChildSummary[];
+  subjectsCount: number;
   recentAnnouncements: any[];
   upcomingEvents: any[];
   pendingFees?: {

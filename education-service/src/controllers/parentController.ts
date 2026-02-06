@@ -140,6 +140,14 @@ class ParentController {
       const classes = await Class.find({ _id: { $in: classIds } });
       const classMap = new Map(classes.map((c) => [c._id.toString(), c]));
 
+      // Count distinct subjects across all linked children
+      const subjectIds = studentIds.length
+        ? await Grade.distinct("subjectId", {
+            studentId: { $in: studentIds.map(String) },
+          })
+        : [];
+      const subjectsCount = subjectIds.length;
+
       // Build child summaries
       const childSummaries: ChildSummary[] = await Promise.all(
         students.map(async (student) => {
@@ -266,6 +274,7 @@ class ParentController {
 
       const dashboard: ParentDashboard = {
         children: childSummaries,
+        subjectsCount,
         recentAnnouncements: announcements,
         upcomingEvents: [], // TODO: Connect to events
         unreadMessages: 0, // TODO: Connect to messaging service
