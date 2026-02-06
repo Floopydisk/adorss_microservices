@@ -4,9 +4,11 @@
 # Tests all major endpoints with JWT authentication on production deployment
 
 BASE_URL="${1:-https://api.adorss.ng}"
-PHONE="+2349111222333"
-EMAIL="testuser@adorss.ng"
-NAME="Test User"
+
+RAND="$(date +%s)"
+PHONE="+2349${RAND: -9}"
+EMAIL="testuser_${RAND}@adorss.ng"
+NAME="Test User ${RAND}"
 PASSWORD="SecurePass123!"
 
 echo "=========================================="
@@ -65,13 +67,56 @@ if echo "$REGISTER_RESPONSE" | grep -q '"token"'; then
   echo "✅ User Registration: SUCCESS"
   echo "   Token: ${ACCESS_TOKEN:0:30}..."
 else
-  echo "❌ User Registration: FAILED"
-  echo "$REGISTER_RESPONSE"
+  # Fallback if email already exists
+  if echo "$REGISTER_RESPONSE" | grep -qi "email.*already"; then
+    echo "⚠️  Email already exists, trying login..."
+    LOGIN_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/phone/loginWithPhone" \
+      -H "Content-Type: application/json" \
+      -d "{\"phone\": \"$PHONE\", \"otp\": \"123456\", \"role\": \"parent\"}")
+    if echo "$LOGIN_RESPONSE" | grep -q '"token"'; then
+      ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | grep -o '"token":"[^"]*' | cut -d'"' -f4)
+      echo "✅ Login: SUCCESS"
+      echo "   Token: ${ACCESS_TOKEN:0:30}..."
+    else
+      echo "❌ Login: FAILED"
+      echo "$LOGIN_RESPONSE"
+      exit 1
+    fi
+  else
+    echo "❌ User Registration: FAILED"
+    echo "$REGISTER_RESPONSE"
+    exit 1
+  fi
+fi
+
+if [ -z "$ACCESS_TOKEN" ]; then
+  echo "❌ No access token generated. Aborting."
   exit 1
 fi
 
 echo ""
 echo ""
+
+# Helper to classify responses
+classify_response() {
+  local response="$1"
+
+  if echo "$response" | grep -q "Missing or invalid authorization header"; then
+    echo "❌ Invalid token or missing auth header"
+  elif echo "$response" | grep -q "Invalid or expired token"; then
+    echo "❌ Invalid or expired token"
+  elif echo "$response" | grep -q "Endpoint not found"; then
+    echo "⚠️  Not Implemented"
+  elif echo "$response" | grep -q "Forbidden"; then
+    echo "⚠️  Permission Denied (Expected in dev)"
+  elif echo "$response" | grep -q "Service unavailable"; then
+    echo "⚠️  Service Unavailable"
+  elif echo "$response" | grep -q "\"success\""; then
+    echo "✅ OK"
+  else
+    echo "❌ Unexpected response"
+  fi
+}
 
 # Step 2: Test Education Service Endpoints
 echo "📚 STEP 2: Education Service Endpoints"
@@ -91,21 +136,12 @@ ENDPOINTS=(
 for endpoint in "${ENDPOINTS[@]}"; do
   METHOD=$(echo $endpoint | cut -d' ' -f1)
   PATH=$(echo $endpoint | cut -d' ' -f2)
-  
+
   RESPONSE=$(curl -s -X "$METHOD" "$BASE_URL$PATH" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Accept: application/json")
-  
-  if echo "$RESPONSE" | grep -q '"success"'; then
-    echo "✅ $endpoint"
-  elif echo "$RESPONSE" | grep -q "Endpoint not found"; then
-    echo "⚠️  $endpoint - Not Implemented"
-  elif echo "$RESPONSE" | grep -q "Forbidden"; then
-    echo "⚠️  $endpoint - Permission Denied (Expected in dev)"
-  else
-    echo "❌ $endpoint"
-    echo "   Response: ${RESPONSE:0:100}"
-  fi
+
+  echo "$(classify_response "$RESPONSE") - $endpoint"
 done
 
 echo ""
@@ -126,21 +162,12 @@ ENDPOINTS=(
 for endpoint in "${ENDPOINTS[@]}"; do
   METHOD=$(echo $endpoint | cut -d' ' -f1)
   PATH=$(echo $endpoint | cut -d' ' -f2)
-  
+
   RESPONSE=$(curl -s -X "$METHOD" "$BASE_URL$PATH" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Accept: application/json")
-  
-  if echo "$RESPONSE" | grep -q '"success"'; then
-    echo "✅ $endpoint"
-  elif echo "$RESPONSE" | grep -q "Endpoint not found"; then
-    echo "⚠️  $endpoint - Not Implemented"
-  elif echo "$RESPONSE" | grep -q "Forbidden"; then
-    echo "⚠️  $endpoint - Permission Denied (Expected in dev)"
-  else
-    echo "❌ $endpoint"
-    echo "   Response: ${RESPONSE:0:100}"
-  fi
+
+  echo "$(classify_response "$RESPONSE") - $endpoint"
 done
 
 echo ""
@@ -159,23 +186,14 @@ ENDPOINTS=(
 for endpoint in "${ENDPOINTS[@]}"; do
   METHOD=$(echo $endpoint | cut -d' ' -f1)
   PATH=$(echo $endpoint | cut -d' ' -f2)
-  
+
   RESPONSE=$(curl -s -X "$METHOD" "$BASE_URL$PATH" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{}')
-  
-  if echo "$RESPONSE" | grep -q '"success"'; then
-    echo "✅ $endpoint"
-  elif echo "$RESPONSE" | grep -q "Endpoint not found"; then
-    echo "⚠️  $endpoint - Not Implemented"
-  elif echo "$RESPONSE" | grep -q "Forbidden"; then
-    echo "⚠️  $endpoint - Permission Denied (Expected in dev)"
-  else
-    echo "❌ $endpoint"
-    echo "   Response: ${RESPONSE:0:100}"
-  fi
+
+  echo "$(classify_response "$RESPONSE") - $endpoint"
 done
 
 echo ""
@@ -194,33 +212,21 @@ ENDPOINTS=(
 for endpoint in "${ENDPOINTS[@]}"; do
   METHOD=$(echo $endpoint | cut -d' ' -f1)
   PATH=$(echo $endpoint | cut -d' ' -f2)
-  
+
   RESPONSE=$(curl -s -X "$METHOD" "$BASE_URL$PATH" \
     -H "Authorization: Bearer $ACCESS_TOKEN" \
     -H "Accept: application/json")
-  
-  if echo "$RESPONSE" | grep -q '"success"'; then
-    echo "✅ $endpoint"
-  elif echo "$RESPONSE" | grep -q "Endpoint not found"; then
-    echo "⚠️  $endpoint - Not Implemented"
-  elif echo "$RESPONSE" | grep -q "Forbidden"; then
-    echo "⚠️  $endpoint - Permission Denied (Expected in dev)"
-  else
-    echo "❌ $endpoint"
-    echo "   Response: ${RESPONSE:0:100}"
-  fi
+
+  echo "$(classify_response "$RESPONSE") - $endpoint"
 done
 
 echo ""
-echo ""
-
-# Summary
 echo "=========================================="
 echo "✅ Test Summary"
 echo "=========================================="
-echo "✅ User registration: SUCCESS"
+echo "✅ User registration/login: SUCCESS"
 echo "✅ JWT token obtained: SUCCESS"
-echo "✅ Protected endpoints: ACCESSIBLE"
+echo "✅ Protected endpoints: RESPONDING"
 echo ""
 echo "Token for manual testing:"
 echo "Authorization: Bearer $ACCESS_TOKEN"
