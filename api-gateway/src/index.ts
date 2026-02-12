@@ -45,6 +45,22 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
+// Environment variables (development only)
+app.get("/debug/env", (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      success: false,
+      message: "Environment debug endpoint is disabled in production",
+    });
+  }
+
+  res.json({
+    success: true,
+    environment: process.env,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Root
 app.get("/", (req: Request, res: Response) => {
   res.json({
