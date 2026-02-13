@@ -10,3 +10,5 @@ coverage/
 *.tsbuildinfo
 pnpm-lock.yaml
 yarn.lock
+!node_modules/@prisma/client
+!node_modules/.prisma
